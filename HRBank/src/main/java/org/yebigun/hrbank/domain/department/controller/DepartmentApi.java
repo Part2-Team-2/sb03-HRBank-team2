@@ -7,10 +7,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.yebigun.hrbank.domain.department.dto.data.DepartmentDto;
 import org.yebigun.hrbank.domain.department.dto.request.DepartmentCreateRequest;
 import org.yebigun.hrbank.global.dto.ErrorResponse;
-import org.yebigun.hrbank.domain.department.dto.data.DepartmentDto;
 
 @Tag(name = "부서 관리", description = "부서 관리 API")
 public interface DepartmentApi {
