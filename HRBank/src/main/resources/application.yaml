@@ -1,0 +1,60 @@
+springdoc:
+  api-docs:
+    # OpenAPI ??? ??(JSON)
+    path: /v3/api-docs
+  swagger-ui:
+    # OpenAPI ??? ??(HTML)
+    path: /swagger-ui.html
+    # ?? ?? ?? ??
+    display-request-duration: true
+    # HTTP ??? ???? ??
+    operations-sorter: method
+
+
+spring:
+  config:
+    activate:
+      on-profile: local
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:~/test
+    username: root
+    password:
+  jpa:
+    show_sql: true
+    hibernate:
+      ddl-auto: create
+---
+
+spring:
+  config:
+    activate:
+      on-profile: dev
+  # DB ?? ??
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hrbankdb
+    username: yebigun
+    password: yebigun
+    driver-class-name: org.postgresql.Driver
+  # JPA ??
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+        use_sql_comments: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
+# logging ??
+logging:
+  level:
+    org.hibernate.sql: debug
+    org.hibernate.orm.jdbc.bind: trace
