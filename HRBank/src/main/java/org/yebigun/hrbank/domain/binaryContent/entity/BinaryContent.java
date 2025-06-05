@@ -15,8 +15,8 @@ import org.yebigun.hrbank.global.base.BaseEntity;
  * Date         : 2025. 6. 5.
  */
 @Entity
-@NoArgsConstructor
 @Getter
+@NoArgsConstructor
 @SuperBuilder
 public class BinaryContent extends BaseEntity {
     @Column(name = "file_name", nullable = false)
