@@ -1,0 +1,29 @@
+name: "🧹 Refactor"
+description: "기존 코드 구조 개선"
+labels: ["refactor"]
+body:
+  - type: textarea
+    attributes:
+      label: 🔧 리팩토링 대상
+      description: 어떤 모듈이나 컴포넌트를 리팩토링할 예정인가요?
+      placeholder: 예) UserService, ChannelController 등
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 🎯 리팩토링 목표
+      description: 성능 개선, 가독성 향상, 중복 제거 등 리팩토링의 목적을 작성해주세요.
+      placeholder: 명확한 목표가 있으면 코드 개선이 수월합니다.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 📋 세부 작업
+      description: 해야 할 리팩토링 작업을 체크박스로 작성해주세요.
+      placeholder: 예) - [ ] 불필요한 의존성 제거, - [ ] 네이밍 개선
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: 🙋 참고 사항
+      description: 리팩토링 중 고려해야 할 사항이나 협의가 필요한 부분이 있다면 작성해주세요.
