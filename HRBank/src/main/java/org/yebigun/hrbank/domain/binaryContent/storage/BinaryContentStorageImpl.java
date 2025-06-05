@@ -14,9 +14,7 @@ import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepository;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.binaryContent.storage
@@ -62,12 +60,21 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
             BinaryContent attachment = binaryContentRepository.findById(binaryContentId).orElseThrow(() -> new IllegalStateException("image information is not saved"));
             String extention = getExtention(attachment.getFileName());
             Path path = resolvePath(binaryContentId, extention);
+            Path tempPath = root.resolve(path);
 
-            try (FileOutputStream fos = new FileOutputStream(path.toFile())) {
-                fos.write(bytes);
+            try {
+                // 임시 파일에 먼저 쓰기
+                Files.write(tempPath, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+                Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
             } catch (IOException e) {
-                throw new RuntimeException("image not saved", e);
+                try {
+                    Files.deleteIfExists(tempPath);
+                } catch (IOException deleteException) {
+                    e.addSuppressed(deleteException);
+                }
+                throw new RuntimeException("파일 저장에 실패했습니다", e);
             }
+
             return attachment.getId();
         }
 
