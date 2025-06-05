@@ -2,7 +2,7 @@ package org.yebigun.hrbank.domain.binaryContent.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
-import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponse;
+import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 
 /**
@@ -15,5 +15,5 @@ import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 @Mapper(componentModel = "spring")
 public interface BinaryContentMapper {
     BinaryContentMapper INSTANCE = Mappers.getMapper(BinaryContentMapper.class);
-    BinaryContentResponse toDto(BinaryContent binaryContent);
+    BinaryContentResponseDto toDto(BinaryContent binaryContent);
 }

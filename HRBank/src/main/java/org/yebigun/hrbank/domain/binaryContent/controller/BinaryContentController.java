@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponse;
+import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepository;
 import org.yebigun.hrbank.domain.binaryContent.service.BinaryContentService;
@@ -27,8 +27,8 @@ public class BinaryContentController {
     // id = binary content id
     @GetMapping("{id}/download")
     public ResponseEntity<?> downloadBinaryContent(@PathVariable Long id) {
-        BinaryContentResponse binaryContentResponse = binaryContentService.find(id);
-        return binaryContentStorage.download(binaryContentResponse);
+        BinaryContentResponseDto binaryContentResponseDto = binaryContentService.find(id);
+        return binaryContentStorage.download(binaryContentResponseDto);
     }
 
     @PostMapping("/upload")

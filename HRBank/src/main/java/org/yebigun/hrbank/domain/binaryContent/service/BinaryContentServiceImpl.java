@@ -2,7 +2,7 @@ package org.yebigun.hrbank.domain.binaryContent.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponse;
+import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.mapper.BinaryContentMapper;
 import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepository;
@@ -22,7 +22,7 @@ public class BinaryContentServiceImpl implements BinaryContentService {
     private final BinaryContentMapper binaryContentMapper;
 
     @Override
-    public BinaryContentResponse find(Long binaryId) {
+    public BinaryContentResponseDto find(Long binaryId) {
         BinaryContent binaryContent = binaryContentRepository.findById(binaryId).orElse(null);
         return binaryContentMapper.toDto(binaryContent);
     }

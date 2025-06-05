@@ -1,7 +1,7 @@
 package org.yebigun.hrbank.domain.binaryContent.storage;
 
 import org.springframework.http.ResponseEntity;
-import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponse;
+import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
 
 import java.io.InputStream;
 
@@ -17,5 +17,5 @@ public interface BinaryContentStorage {
 
     InputStream get(Long BinaryContentId);
 
-    ResponseEntity<?> download(BinaryContentResponse response);
+    ResponseEntity<?> download(BinaryContentResponseDto response);
 }

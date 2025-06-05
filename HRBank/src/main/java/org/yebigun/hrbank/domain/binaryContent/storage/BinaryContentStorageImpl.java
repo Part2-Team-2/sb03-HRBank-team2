@@ -9,7 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponse;
+import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepository;
 
@@ -60,7 +60,7 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
             BinaryContent attachment = binaryContentRepository.findById(binaryContentId).orElseThrow(() -> new IllegalStateException("image information is not saved"));
             String extention = getExtention(attachment.getFileName());
             Path path = resolvePath(binaryContentId, extention);
-            Path tempPath = root.resolve(path);
+            Path tempPath = root.resolve(path.getFileName()+".tmp");
 
             try {
                 // 임시 파일에 먼저 쓰기
@@ -98,7 +98,7 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         }
 
         @Override
-        public ResponseEntity<?> download(BinaryContentResponse response) {
+        public ResponseEntity<?> download(BinaryContentResponseDto response) {
             try {
                 InputStream input = get(response.id());
                 InputStreamResource resource = new InputStreamResource(input);

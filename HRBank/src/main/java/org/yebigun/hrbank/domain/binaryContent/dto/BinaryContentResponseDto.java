@@ -10,7 +10,7 @@ import lombok.Builder;
  */
 
 @Builder
-public record BinaryContentResponse(
+public record BinaryContentResponseDto(
     Long id,
     String fileName,
     Long size,
