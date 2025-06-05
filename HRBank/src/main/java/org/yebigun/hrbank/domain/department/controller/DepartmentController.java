@@ -1,5 +1,6 @@
 package org.yebigun.hrbank.domain.department.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public class DepartmentController implements DepartmentApi {
     @Override
     @PostMapping
     public ResponseEntity<DepartmentDto> create(
-        @RequestBody DepartmentCreateRequest request
+        @RequestBody @Valid DepartmentCreateRequest request
     ) {
         DepartmentDto createdDepartment = departmentService.create(request);
 
