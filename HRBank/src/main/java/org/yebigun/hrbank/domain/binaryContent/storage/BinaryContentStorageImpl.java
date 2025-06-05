@@ -3,6 +3,7 @@ package org.yebigun.hrbank.domain.binaryContent.storage;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -12,10 +13,7 @@ import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponse;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepository;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -68,33 +66,36 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
 
         @Override
         public InputStream get(Long binaryContentId) {
-            BinaryContent binaryContent = binaryContentRepository.findById(binaryContentId).orElseThrow(() -> new IllegalStateException("image information not found"));
+            BinaryContent binaryContent = binaryContentRepository.findById(binaryContentId)
+                .orElseThrow(() -> new IllegalStateException("바이너리 컨텐츠 정보를 찾을 수 없습니다"));
             String extention = getExtention(binaryContent.getFileName());
 
             Path path = resolvePath(binaryContentId, extention);
 
             if (!Files.exists(path)) {
-                throw new RuntimeException("file not found: " + path);
+                throw new RuntimeException("파일을 찾을 수 없습니다: " + binaryContentId);
             }
 
             try {
                 return Files.newInputStream(path);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("파일 읽기에 실패했습니다", e);
             }
         }
 
         @Override
         public ResponseEntity<?> download(BinaryContentResponse response) {
             try {
-                byte[] bytes = get(response.id()).readAllBytes();
+                InputStream input = get(response.id());
+                InputStreamResource resource = new InputStreamResource(input);
+
                 return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType(response.contentType()))
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\""+response.fileName()+"\"")
                     .contentLength(response.size())
-                    .body(bytes);
+                    .body(resource);
 
-            } catch (IOException e) {
+            } catch (Exception e) {
                 throw new RuntimeException("파일 다운 실패"+response.fileName()+" "+e);
             }
         }

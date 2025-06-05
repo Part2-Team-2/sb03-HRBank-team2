@@ -11,5 +11,4 @@ import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
  */
 public interface BinaryContentService {
     BinaryContentResponse find(Long binaryId);
-    void create(Long id);
 }

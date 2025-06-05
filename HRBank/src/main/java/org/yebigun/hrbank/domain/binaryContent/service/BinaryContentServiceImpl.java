@@ -26,10 +26,4 @@ public class BinaryContentServiceImpl implements BinaryContentService {
         BinaryContent binaryContent = binaryContentRepository.findById(binaryId).orElse(null);
         return binaryContentMapper.toDto(binaryContent);
     }
-
-    @Override
-    public void create(Long id) {
-        BinaryContent binaryContent = BinaryContent.builder().build();
-
-    }
 }
