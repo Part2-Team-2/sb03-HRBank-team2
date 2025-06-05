@@ -12,7 +12,7 @@ import org.yebigun.hrbank.domain.department.repository.DepartmentRepository;
 
 @RequiredArgsConstructor
 @Service
-public class DepartmentServiceImpl implements DepartmentService{
+public class DepartmentServiceImpl implements DepartmentService {
 
     private final DepartmentRepository departmentRepository;
     private final DepartmentMapper departmentMapper;

@@ -14,7 +14,7 @@ import org.yebigun.hrbank.domain.department.service.DepartmentService;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/departments")
-public class DepartmentController implements DepartmentApi{
+public class DepartmentController implements DepartmentApi {
 
     private final DepartmentService departmentService;
 
