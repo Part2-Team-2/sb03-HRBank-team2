@@ -36,7 +36,7 @@ public class BinaryContentController {
         try {
             BinaryContent binaryContent = BinaryContent.builder()
                 .fileName(file.getOriginalFilename())
-                .size((long) file.getSize())
+                .size(file.getSize())
                 .contentType(file.getContentType())
                 .build();
             binaryContentRepository.save(binaryContent);

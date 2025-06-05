@@ -29,7 +29,7 @@ import java.nio.file.Paths;
 @Service
 @RequiredArgsConstructor
 public class BinaryContentStorageImpl implements BinaryContentStorage {
-        private static final String PROFILE_PATH = "uploads";
+        private static final String PATH = "uploads";
         private final BinaryContentRepository binaryContentRepository;
 
         private Path root;
@@ -40,13 +40,20 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
 
         @PostConstruct
         public void init() {
-            String uploadPath = new File(path).getAbsolutePath() + "/" + PROFILE_PATH;
-            File directory = new File(uploadPath);
+            try{
+                Path basePath = Paths.get(path).toAbsolutePath().normalize();
+                Path uploadPath = basePath.resolve(PATH);
 
-            if (!directory.exists() && !directory.mkdirs()) {
-                throw new RuntimeException(uploadPath);
+                if (!uploadPath.startsWith(basePath)) {
+                    throw new SecurityException("경로 조작 시도가 감지되었습니다");
+                }
+                Files.createDirectories(uploadPath);
+                this.root = uploadPath;
+
+            } catch (Exception e) {
+                throw new RuntimeException("업로드 디렉토리 생성에 실패했습니다: " + path, e);
             }
-            this.root = Paths.get(uploadPath);
+
         }
 
 

@@ -1,7 +1,6 @@
 package org.yebigun.hrbank.domain.binaryContent.service;
 
 import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponse;
-import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.binaryContent.service

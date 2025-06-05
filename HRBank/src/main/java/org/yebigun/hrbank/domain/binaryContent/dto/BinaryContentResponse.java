@@ -1,9 +1,6 @@
 package org.yebigun.hrbank.domain.binaryContent.dto;
 
 import lombok.Builder;
-import lombok.Getter;
-
-import java.util.UUID;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.binaryContent.dto
