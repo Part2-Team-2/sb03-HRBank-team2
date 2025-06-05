@@ -1,0 +1,23 @@
+# .coderabbit.yaml
+
+reviews:
+  # 모든 브랜치에서 자동 리뷰 허용
+  enable_on_all_branches: true
+
+  # 또는 특정 브랜치 명시 (둘 중 하나만 쓰세요)
+  # branches:
+  #   include:
+  #     - "*"
+
+  # 리뷰 상태 메시지를 출력 (원하지 않으면 false)
+  review_status: true
+
+# 기타 설정 예시 (선택)
+comments:
+  summarize: true  # 요약된 코멘트만 보여주기
+  suggestions: true  # 코드 수정 제안 포함
+
+# 필요시 ignore 패턴 추가
+ignore:
+  - "docs/**"
+  - "*.md"
