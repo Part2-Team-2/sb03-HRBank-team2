@@ -28,6 +28,11 @@ spring:
     show_sql: true
     hibernate:
       ddl-auto: create
+file:
+  upload:
+    all:
+      path: ./files
+
 ---
 
 spring:
@@ -53,8 +58,14 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
 
+
 # logging ??
 logging:
   level:
     org.hibernate.sql: debug
     org.hibernate.orm.jdbc.bind: trace
+
+file:
+  upload:
+    all:
+      path: ./files
