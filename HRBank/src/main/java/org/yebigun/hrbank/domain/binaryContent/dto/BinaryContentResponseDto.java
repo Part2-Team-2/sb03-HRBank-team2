@@ -11,7 +11,7 @@ import lombok.Builder;
 
 @Builder
 public record BinaryContentResponseDto(
-    Long id,
+    Integer id,
     String fileName,
     Long size,
     String contentType

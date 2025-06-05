@@ -1,8 +1,14 @@
 package org.yebigun.hrbank.domain.backup.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpRequestHandler;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.yebigun.hrbank.domain.backup.dto.BackupDto;
+import org.yebigun.hrbank.domain.backup.service.BackupService;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.backup.controller
@@ -14,5 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("api/backups")
 public class BackupController {
+    private final BackupService backupService;
 
+    @PostMapping
+    public ResponseEntity<BackupDto> createBackup(HttpServletRequest request) {
+        backupService.createBackup(request);
+    }
 }
