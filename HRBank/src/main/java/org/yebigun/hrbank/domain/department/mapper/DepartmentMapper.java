@@ -24,7 +24,7 @@ public class DepartmentMapper {
 
     private int calculateEmployeeCount(Department department) {
 
-         int employeeCount = employeeRepository.countByDepartmentId(department.getId());
+        int employeeCount = employeeRepository.countByDepartmentId(department.getId());
         return employeeCount;
     }
 }
