@@ -30,8 +30,8 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class BinaryContentStorageImpl implements BinaryContentStorage {
-    //    private static final String COLUMNS = "ID,직원번호,이름,이메일,부서,직급,입사일,상태";
-    private static final String COLUMNS = "ID,이름,이메일,직급";
+        private static final String COLUMNS = "ID,직원번호,이름,이메일,부서,직급,입사일,상태";
+//    private static final String COLUMNS = "ID,이름,이메일,직급";
     private static final String CSV_EXTENTION = ".csv";
     private static final String CSV_CONTENT_TYPE = ".csv";
     private static final String LOG_EXTENTION = "text/csv";
@@ -65,7 +65,7 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
     }
 
     @Override
-    public Long putCsv(List<Employee> employees) {
+    public BinaryContent putCsv(List<Employee> employees) {
         // 1. 유저 전부 불러오고
         // 2. UUID를 이름으로 파일 만들고
         //      (1). UUID 생성
@@ -78,13 +78,19 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
             bw.newLine();
             //      (3). employee 정보 추가
             for (Employee employee : employees) {
-                bw.write(String.format("%d,%s,%s,%s",
+                bw.write(String.format("%d,%s,%s,%s,%s,%s,%s,%s",
                     employee.getId(),
+                    employee.getEmployeeNumber(),
                     employee.getName(),
                     employee.getEmail(),
-                    employee.getPosition()));
+                    "", // 부서 필드 없음 employee 완성되면 추가
+                    employee.getPosition(),
+                    employee.getHireDate(),
+                    employee.getStatus()
+                ));
                 bw.newLine();
             }
+
             bw.flush();
 
         } catch (IOException e) {
@@ -113,7 +119,7 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
             }
             throw new RuntimeException("파일 저장에 실패했습니다", e);
         }
-        return binaryContent.getId();
+        return binaryContent;
     }
 
     @Override

@@ -2,6 +2,7 @@ package org.yebigun.hrbank.domain.binaryContent.storage;
 
 import org.springframework.http.ResponseEntity;
 import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
+import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
 
 import java.io.InputStream;
@@ -18,9 +19,9 @@ public interface BinaryContentStorage {
 
     Long put(Long BinaryContentId, byte[] bytes);
 
+    BinaryContent putCsv(List<Employee> employees);
+
     InputStream get(Long BinaryContentId);
 
     ResponseEntity<?> download(BinaryContentResponseDto response);
-
-    Long putCsv(List<Employee> employees);
 }
