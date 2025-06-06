@@ -105,11 +105,16 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         }
 
         // 3. 파일로 바이너리 컨텐츠 만들고
-        File file = new File(tempFileName + CSV_EXTENTION);
+        long fileSize;
+        try{
+            fileSize = Files.size(tempPath);
+        } catch (IOException e) {
+            throw new RuntimeException("파일 저장에 실패했습니다", e);
+        }
 
         BinaryContent binaryContent = BinaryContent.builder()
-            .fileName(file.getName())
-            .size(file.length())
+            .fileName(tempFileName + CSV_EXTENTION)
+            .size(fileSize)
             .contentType(CSV_CONTENT_TYPE)
             .build();
         binaryContentRepository.save(binaryContent);
