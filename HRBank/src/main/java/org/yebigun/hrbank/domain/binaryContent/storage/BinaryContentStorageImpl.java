@@ -34,8 +34,8 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         private static final String COLUMNS = "ID,직원번호,이름,이메일,부서,직급,입사일,상태";
 //    private static final String COLUMNS = "ID,이름,이메일,직급";
     private static final String CSV_EXTENTION = ".csv";
-    private static final String CSV_CONTENT_TYPE = ".csv";
-    private static final String LOG_EXTENTION = "text/csv";
+    private static final String CSV_CONTENT_TYPE = "text/csv";
+    private static final String LOG_EXTENTION = ".log";
     private static final String LOG_CONTENT_TYPE = "text/plain";
     private static final String PATH = "uploads";
     private final BinaryContentRepository binaryContentRepository;
@@ -77,9 +77,7 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
             bw.write(COLUMNS);
             bw.newLine();
             //      (3). employee 정보 추가
-            System.out.println("for 진입전");
             for (Employee employee : employees) {
-                System.out.println("for 진입 후");
                 try{
                     bw.write(String.format("%d,%s,%s,%s,%s,%s,%s,%s",
                         employee.getId(),
@@ -92,7 +90,6 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
                         employee.getHireDate(),
                         employee.getStatus()
                     ));
-                    System.out.println("라인 저장");
                     bw.newLine();
                 } catch (Exception e){
                     try {
