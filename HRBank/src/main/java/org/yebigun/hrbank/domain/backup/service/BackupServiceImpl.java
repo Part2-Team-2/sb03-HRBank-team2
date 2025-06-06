@@ -67,7 +67,7 @@ public class BackupServiceImpl implements BackupService {
         try{
             // 1. 모든 유저 정보 조회
             List<Employee> employees = employeeRepository.findAll();
-            // 2. CSV 파일 생성
+            // 2. CSV 파일 생성 - 실패시 내부 로직에서 csv 파일 삭제
             BinaryContent csvFile = binaryContentStorage.putCsv(employees);
 
             backupBuilder
@@ -78,15 +78,15 @@ public class BackupServiceImpl implements BackupService {
             backupRepository.save(backup);
             return backupMapper.toDto(backup);
 
-        } catch (Exception e) {
-            // 1. 저장하던 CSV 파일 삭제
-            // 2. 실패 로그 생성(.log)
-            BinaryContent sampleLog = null;
+        } catch (Exception exception) {
+            // 1. 실패 로그 생성(.log)
+            BinaryContent logFile = null;
+//            BinaryContent logFile = binaryContentStorage.putLog(exception);
 
             backupBuilder
                 .backupStatus(BackupStatus.FAILED)
                 .startedAtTo(Instant.now())
-                .binaryContent(sampleLog);
+                .binaryContent(logFile);
             Backup backup = backupBuilder.build();
             backupRepository.save(backup);
             return backupMapper.toDto(backup);
