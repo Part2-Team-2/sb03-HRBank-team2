@@ -33,10 +33,10 @@ public class DepartmentController implements DepartmentApi {
 
     @Override
     @GetMapping("/{id}")
-    public ResponseEntity<DepartmentDto> find(
+    public ResponseEntity<DepartmentDto> findById(
         @PathVariable("id") Long id
     ) {
-        DepartmentDto department = departmentService.find(id);
+        DepartmentDto department = departmentService.findById(id);
         return ResponseEntity.status(HttpStatus.OK).body(department);
     }
 

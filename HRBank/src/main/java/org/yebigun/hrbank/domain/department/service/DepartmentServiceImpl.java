@@ -42,7 +42,7 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     @Override
     @Transactional(readOnly = true)
-    public DepartmentDto find(Long departmentId) {
+    public DepartmentDto findById(Long departmentId) {
         Department department = departmentRepository.findById(departmentId)
             .orElseThrow(() -> new NoSuchElementException("존재하지 않는 부서입니다"));
 

@@ -7,6 +7,6 @@ public interface DepartmentService {
 
     DepartmentDto create(DepartmentCreateRequest request);
 
-    DepartmentDto find(Long departmentId);
+    DepartmentDto findById(Long departmentId);
 
 }

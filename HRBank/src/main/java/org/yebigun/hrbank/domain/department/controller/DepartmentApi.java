@@ -1,6 +1,7 @@
 package org.yebigun.hrbank.domain.department.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -72,8 +73,8 @@ public interface DepartmentApi {
             )
         )
     })
-    ResponseEntity<DepartmentDto> find(
-        Long id
+    ResponseEntity<DepartmentDto> findById(
+        @Parameter(description = "부서 ID", required = true) Long id
     );
 
 
