@@ -17,6 +17,7 @@ import org.yebigun.hrbank.domain.employee.entity.Employee;
 import java.io.*;
 import java.nio.file.*;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.UUID;
 
 /**
@@ -61,7 +62,6 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         } catch (Exception e) {
             throw new RuntimeException("업로드 디렉토리 생성에 실패했습니다: " + path, e);
         }
-
     }
 
     @Override
@@ -77,22 +77,32 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
             bw.write(COLUMNS);
             bw.newLine();
             //      (3). employee 정보 추가
+            System.out.println("for 진입전");
             for (Employee employee : employees) {
-                bw.write(String.format("%d,%s,%s,%s,%s,%s,%s,%s",
-                    employee.getId(),
-                    employee.getEmployeeNumber(),
-                    employee.getName(),
-                    employee.getEmail(),
-                    "", // 부서 필드 없음 employee 완성되면 추가
-                    employee.getPosition(),
-                    employee.getHireDate(),
-                    employee.getStatus()
-                ));
-                bw.newLine();
+                System.out.println("for 진입 후");
+                try{
+                    bw.write(String.format("%d,%s,%s,%s,%s,%s,%s,%s",
+                        employee.getId(),
+                        employee.getEmployeeNumber(),
+                        employee.getName(),
+                        employee.getEmail(),
+//                        employee.getDepartment().getId(),
+                        "[employee.getDepartment().getId() <- dto 추가되면 매핑해서 추가]",
+                        employee.getPosition(),
+                        employee.getHireDate(),
+                        employee.getStatus()
+                    ));
+                    System.out.println("라인 저장");
+                    bw.newLine();
+                } catch (Exception e){
+                    try {
+                        Files.deleteIfExists(tempPath);
+                    } catch (IOException deleteException) {
+                        e.addSuppressed(deleteException);
+                    }
+                }
             }
-
             bw.flush();
-
         } catch (IOException e) {
             throw new RuntimeException("파일 생성중 오류 발생", e);
         }
@@ -147,19 +157,19 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
     @Override
     public InputStream get(Long binaryContentId) {
         BinaryContent binaryContent = binaryContentRepository.findById(binaryContentId)
-            .orElseThrow(() -> new IllegalStateException("바이너리 컨텐츠 정보를 찾을 수 없습니다"));
+            .orElseThrow(() -> new NoSuchElementException("파일을 찾을 수 없습니다."));
         String extention = getExtention(binaryContent.getFileName());
 
         Path path = resolvePath(binaryContentId, extention);
 
         if (!Files.exists(path)) {
-            throw new RuntimeException("파일을 찾을 수 없습니다: " + binaryContentId);
+            throw new NoSuchElementException("파일을 찾을 수 없습니다.");
         }
 
         try {
             return Files.newInputStream(path);
         } catch (IOException e) {
-            throw new RuntimeException("파일 읽기에 실패했습니다", e);
+            throw new NoSuchElementException("파일을 찾을 수 없습니다.");
         }
     }
 
@@ -176,7 +186,7 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
                 .body(resource);
 
         } catch (Exception e) {
-            throw new RuntimeException("파일 다운 실패" + response.fileName() + " " + e);
+            throw new NoSuchElementException("파일을 찾을 수 없습니다.");
         }
     }
 
