@@ -1,8 +1,9 @@
 package org.yebigun.hrbank.domain.employee.service;
 
-import org.springframework.stereotype.Service;
+import java.time.LocalDate;
+import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 
-@Service
-public class EmployeeService {
+public interface EmployeeService {
 
+    long getEmployeeCount(EmployeeStatus status, LocalDate fromDate, LocalDate toDate);
 }
