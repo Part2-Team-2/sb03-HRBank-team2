@@ -47,7 +47,6 @@ public class BackupServiceImpl implements BackupService {
         Backup.BackupBuilder backupBuilder = Backup.builder()
             .startedAtFrom(Instant.now())
             .employeeIp(getIp(request));
-        System.out.println("--------------------------------------------------"+Instant.now());
 
         // 변경 감지 : 가장 최근 완료된 배치 작업 시간 이후 직원 데이터가 변경된 경우에 데이터 백업이 필요한 것으로 간주합니다.
         boolean change = true;
@@ -75,7 +74,6 @@ public class BackupServiceImpl implements BackupService {
                 .backupStatus(BackupStatus.COMPLETED)
                 .startedAtTo(Instant.now())
                 .binaryContent(csvFile);
-            System.out.println("--------------------------------------------------"+Instant.now());
             Backup backup = backupBuilder.build();
             backupRepository.save(backup);
             return backupMapper.toDto(backup);
