@@ -7,4 +7,7 @@ import org.yebigun.hrbank.domain.employee.entity.Employee;
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
+    int countByDepartmentId(Long departmentId);
+
+
 }

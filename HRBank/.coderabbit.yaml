@@ -1,23 +1,18 @@
-# .coderabbit.yaml
-
+language: "ko-KR"
+early_access: false
 reviews:
-  # 모든 브랜치에서 자동 리뷰 허용
-  enable_on_all_branches: true
-
-  # 또는 특정 브랜치 명시 (둘 중 하나만 쓰세요)
-  # branches:
-  #   include:
-  #     - "*"
-
-  # 리뷰 상태 메시지를 출력 (원하지 않으면 false)
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: true
   review_status: true
-
-# 기타 설정 예시 (선택)
-comments:
-  summarize: true  # 요약된 코멘트만 보여주기
-  suggestions: true  # 코드 수정 제안 포함
-
-# 필요시 ignore 패턴 추가
-ignore:
-  - "docs/**"
-  - "*.md"
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "main"
+      - "develop"
+      - "dev"
+chat:
+  auto_reply: true
