@@ -40,5 +40,11 @@ public class Backup extends BaseUpdatableEntity {
     @JoinColumn(name = "binary_content_id")
     BinaryContent binaryContent;
 
+    public void updateFile(BinaryContent binaryContent) {
+        if(binaryContent == null && this.binaryContent != null) {
+            this.binaryContent = binaryContent;
+        }
+    }
+
 }
 

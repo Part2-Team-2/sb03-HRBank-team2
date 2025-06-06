@@ -79,16 +79,20 @@ public class BackupServiceImpl implements BackupService {
             return backupMapper.toDto(backup);
 
         } catch (Exception exception) {
-            // 1. 실패 로그 생성(.log)
-            BinaryContent logFile = null;
-//            BinaryContent logFile = binaryContentStorage.putLog(exception);
 
             backupBuilder
                 .backupStatus(BackupStatus.FAILED)
                 .startedAtTo(Instant.now())
-                .binaryContent(logFile);
+                .binaryContent(null);
             Backup backup = backupBuilder.build();
             backupRepository.save(backup);
+
+
+            BinaryContent logFile = null;
+//            BinaryContent logFile = binaryContentStorage.putLog(exception);
+
+            backup.updateFile(logFile);
+
             return backupMapper.toDto(backup);
         }
     }
