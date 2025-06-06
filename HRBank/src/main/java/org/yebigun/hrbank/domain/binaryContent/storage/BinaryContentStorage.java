@@ -2,8 +2,12 @@ package org.yebigun.hrbank.domain.binaryContent.storage;
 
 import org.springframework.http.ResponseEntity;
 import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
+import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
+import org.yebigun.hrbank.domain.employee.entity.Employee;
 
 import java.io.InputStream;
+import java.nio.file.Path;
+import java.util.List;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.binaryContent.storage
@@ -14,6 +18,8 @@ import java.io.InputStream;
 public interface BinaryContentStorage {
 
     Long put(Long BinaryContentId, byte[] bytes);
+
+    BinaryContent putCsv(List<Employee> employees);
 
     InputStream get(Long BinaryContentId);
 
