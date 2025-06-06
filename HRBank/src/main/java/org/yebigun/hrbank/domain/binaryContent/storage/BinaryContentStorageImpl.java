@@ -250,7 +250,7 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         return binaryContent;
     }
 
-    public Path resolvePath(Long id, String extention) {
+    private Path resolvePath(Long id, String extention) {
         return root.resolve(id.toString() + extention);
     }
 
