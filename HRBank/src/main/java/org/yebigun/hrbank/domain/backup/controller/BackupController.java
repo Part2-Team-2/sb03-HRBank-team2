@@ -2,6 +2,7 @@ package org.yebigun.hrbank.domain.backup.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,6 +25,7 @@ public class BackupController {
 
     @PostMapping
     public ResponseEntity<BackupDto> createBackup(HttpServletRequest request) {
-        backupService.createBackup(request);
+        BackupDto backup = backupService.createBackup(request);
+        return ResponseEntity.status(200).body(backup);
     }
 }

@@ -39,7 +39,7 @@ public class BackupServiceImpl implements BackupService {
         Backup.BackupBuilder backupBuilder = Backup.builder()
             .startedAtFrom(Instant.now())
             .employeeIp(getIp(request));
-        // 로직 추가
+
         // 변경 감지 : 가장 최근 완료된 배치 작업 시간 이후 직원 데이터가 변경된 경우에 데이터 백업이 필요한 것으로 간주합니다.
         boolean change = false;
         // 변경사항 없음
@@ -82,6 +82,7 @@ public class BackupServiceImpl implements BackupService {
             return backupMapper.toDto(backup);
         }
     }
+
 
     private String getIp(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");

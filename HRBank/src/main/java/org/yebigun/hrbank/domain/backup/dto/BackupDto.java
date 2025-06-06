@@ -14,7 +14,7 @@ public record BackupDto(
     Integer id,
     String worker,
     Instant startedAt,
-    Instant endAt,
+    Instant endedAt,
     BackupStatus status,
     Integer fileId
 ) {

@@ -18,7 +18,7 @@ import org.yebigun.hrbank.domain.binaryContent.mapper.BinaryContentMapper;
 public interface BackupMapper {
     @Mapping(source = "backupStatus", target = "status")
     @Mapping(source = "startedAtFrom", target = "startedAt")
-    @Mapping(source = "startedAtTo", target = "endAt")
+    @Mapping(source = "startedAtTo", target = "endedAt")
     @Mapping(source = "employeeIp", target = "worker")
     @Mapping(source = "binaryContent.id", target = "fileId")
     BackupDto toDto(Backup backup);
