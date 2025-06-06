@@ -1,6 +1,7 @@
 package org.yebigun.hrbank.domain.binaryContent.storage;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
@@ -15,10 +16,14 @@ import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepositor
 import org.yebigun.hrbank.domain.employee.entity.Employee;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.UUID;
+
+import static org.yebigun.hrbank.domain.binaryContent.entity.QBinaryContent.binaryContent;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.binaryContent.storage
@@ -61,6 +66,65 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
 
         } catch (Exception e) {
             throw new RuntimeException("업로드 디렉토리 생성에 실패했습니다: " + path, e);
+        }
+    }
+
+
+    @Override
+    public Long put(Long binaryContentId, byte[] bytes) {
+        BinaryContent attachment = binaryContentRepository.findById(binaryContentId).orElseThrow(() -> new IllegalStateException("image information is not saved"));
+        String extention = getExtention(attachment.getFileName());
+        Path path = resolvePath(binaryContentId, extention);
+        Path tempPath = root.resolve(path.getFileName() + ".tmp");
+
+        try {
+            // 임시 파일에 먼저 쓰기
+            Files.write(tempPath, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            try {
+                Files.deleteIfExists(tempPath);
+            } catch (IOException deleteException) {
+                e.addSuppressed(deleteException);
+            }
+            throw new RuntimeException("파일 저장에 실패했습니다", e);
+        }
+        return attachment.getId();
+    }
+
+    @Override
+    public InputStream get(Long binaryContentId) {
+        BinaryContent binaryContent = binaryContentRepository.findById(binaryContentId)
+            .orElseThrow(() -> new NoSuchElementException("파일을 찾을 수 없습니다."));
+        String extention = getExtention(binaryContent.getFileName());
+
+        Path path = resolvePath(binaryContentId, extention);
+
+        if (!Files.exists(path)) {
+            throw new NoSuchElementException("파일을 찾을 수 없습니다.");
+        }
+
+        try {
+            return Files.newInputStream(path);
+        } catch (IOException e) {
+            throw new NoSuchElementException("파일을 찾을 수 없습니다.");
+        }
+    }
+
+    @Override
+    public ResponseEntity<?> download(BinaryContentResponseDto response) {
+        try {
+            InputStream input = get(response.id());
+            InputStreamResource resource = new InputStreamResource(input);
+
+            return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(response.contentType()))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + response.fileName() + "\"")
+                .contentLength(response.size())
+                .body(resource);
+
+        } catch (Exception e) {
+            throw new NoSuchElementException("파일을 찾을 수 없습니다.");
         }
     }
 
@@ -135,61 +199,55 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
     }
 
     @Override
-    public Long put(Long binaryContentId, byte[] bytes) {
-        BinaryContent attachment = binaryContentRepository.findById(binaryContentId).orElseThrow(() -> new IllegalStateException("image information is not saved"));
-        String extention = getExtention(attachment.getFileName());
-        Path path = resolvePath(binaryContentId, extention);
-        Path tempPath = root.resolve(path.getFileName() + ".tmp");
+    public BinaryContent putLog(long backupId, Exception exception) throws IOException {
+
+        UUID tempFileName = UUID.randomUUID();
+        Path tempPath = root.resolve(tempFileName + LOG_EXTENTION);
+
+        String content =
+            """
+                [ERROR] 백업 실패
+                --------------------------
+                백업 ID: %d
+                시간: %s
+                실패 사유: %s
+                --------------------------
+                """.formatted(
+                backupId,
+                Instant.now(),
+                exception.getMessage());
 
         try {
-            // 임시 파일에 먼저 쓰기
-            Files.write(tempPath, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.write(tempPath, content.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException deleteException) {
+            exception.addSuppressed(deleteException);
+            throw new RuntimeException("로그 저장에 실패했습니다", deleteException);
+        }
+
+        long fileSize;
+        try{
+            fileSize = Files.size(tempPath);
+        } catch (IOException e) {
+            throw new RuntimeException("파일 크기 측정 실패", e);
+        }
+
+        BinaryContent binaryContent = BinaryContent.builder()
+            .fileName(tempFileName + LOG_EXTENTION)
+            .size(fileSize)
+            .contentType(LOG_CONTENT_TYPE)
+            .build();
+        binaryContentRepository.save(binaryContent);
+
+
+        Path path = resolvePath(binaryContent.getId(), LOG_EXTENTION);
+
+        try{
             Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            try {
-                Files.deleteIfExists(tempPath);
-            } catch (IOException deleteException) {
-                e.addSuppressed(deleteException);
-            }
-            throw new RuntimeException("파일 저장에 실패했습니다", e);
+        } catch (Exception deleteException) {
+            Files.deleteIfExists(tempPath);
+            throw new RuntimeException("로그 저장에 실패했습니다", deleteException);
         }
-        return attachment.getId();
-    }
-
-    @Override
-    public InputStream get(Long binaryContentId) {
-        BinaryContent binaryContent = binaryContentRepository.findById(binaryContentId)
-            .orElseThrow(() -> new NoSuchElementException("파일을 찾을 수 없습니다."));
-        String extention = getExtention(binaryContent.getFileName());
-
-        Path path = resolvePath(binaryContentId, extention);
-
-        if (!Files.exists(path)) {
-            throw new NoSuchElementException("파일을 찾을 수 없습니다.");
-        }
-
-        try {
-            return Files.newInputStream(path);
-        } catch (IOException e) {
-            throw new NoSuchElementException("파일을 찾을 수 없습니다.");
-        }
-    }
-
-    @Override
-    public ResponseEntity<?> download(BinaryContentResponseDto response) {
-        try {
-            InputStream input = get(response.id());
-            InputStreamResource resource = new InputStreamResource(input);
-
-            return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(response.contentType()))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + response.fileName() + "\"")
-                .contentLength(response.size())
-                .body(resource);
-
-        } catch (Exception e) {
-            throw new NoSuchElementException("파일을 찾을 수 없습니다.");
-        }
+        return binaryContent;
     }
 
     public Path resolvePath(Long id, String extention) {
