@@ -20,12 +20,12 @@ import org.yebigun.hrbank.global.base.BaseUpdatableEntity;
 @Table(name = "department")
 public class Department extends BaseUpdatableEntity {
 
-    @Column(nullable = false, unique = true)
+    @Column(name = "name", nullable = false, unique = true)
     private String name;
 
-    @Column(nullable = false)
+    @Column(name = "description", nullable = false)
     private String description;
 
-    @Column(nullable = false)
+    @Column(name = "established_date", nullable = false)
     private LocalDate establishedDate;
 }

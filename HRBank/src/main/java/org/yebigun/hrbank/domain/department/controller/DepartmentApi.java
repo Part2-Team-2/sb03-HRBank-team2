@@ -1,6 +1,7 @@
 package org.yebigun.hrbank.domain.department.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -44,5 +45,37 @@ public interface DepartmentApi {
     ResponseEntity<DepartmentDto> create(
         DepartmentCreateRequest request
     );
+
+    @Operation(summary = "부서 상세 조회")
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = DepartmentDto.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "부서를 찾을 수 없음",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "서버 오류",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    ResponseEntity<DepartmentDto> findById(
+        @Parameter(description = "부서 ID", required = true) Long id
+    );
+
 
 }
