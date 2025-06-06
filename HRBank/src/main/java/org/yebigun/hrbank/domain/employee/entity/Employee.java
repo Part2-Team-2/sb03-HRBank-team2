@@ -2,21 +2,29 @@ package org.yebigun.hrbank.domain.employee.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
+import org.yebigun.hrbank.domain.department.entity.Department;
 import org.yebigun.hrbank.global.base.BaseUpdatableEntity;
 
-@Getter
-@Entity
 @Builder
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table
+@Entity
+@Table(name = "employee")
 public class Employee extends BaseUpdatableEntity {
 
     @Column(nullable = false, unique = true)
@@ -25,7 +33,9 @@ public class Employee extends BaseUpdatableEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
-    //private Department department;
+    @ManyToOne
+    @JoinColumn(name = "department_id")
+    private Department department;
 
     @Column(name = "emp_no", nullable = false)
     private String employeeNumber;
@@ -40,8 +50,10 @@ public class Employee extends BaseUpdatableEntity {
     private String memo;
 
     @Column(nullable = false)
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private EmployeeStatus status;
 
-    //private BinaryContent profile;
+    @OneToOne
+    @JoinColumn(name = "profile_id")
+    private BinaryContent profile;
 }
