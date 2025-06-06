@@ -100,21 +100,43 @@ public class BackupServiceImpl implements BackupService {
 
     private String getIp(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");
+        if(ip !=null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+            ip=ip.split(",")[0].trim();
+            if (isValidIp(ip)) {
+                return ip;
+            }
+        }
+
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("Proxy-Client-IP");
+            if(isValidIp(ip)) return ip;
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("WL-Proxy-Client-IP");
+            if(isValidIp(ip)) return ip;
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("HTTP_CLIENT_IP");
+            if(isValidIp(ip)) return ip;
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+            if(isValidIp(ip)) return ip;
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getRemoteAddr();
         }
         return ip;
+    }
+
+    private boolean isValidIp(String ip) {
+        if (ip == null || ip.trim().isEmpty()) return false;
+
+        try{
+            java.net.InetAddress.getByName(ip);
+            return true;
+        } catch (Exception e){
+            return false;
+        }
     }
 }

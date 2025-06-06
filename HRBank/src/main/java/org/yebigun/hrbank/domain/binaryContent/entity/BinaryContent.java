@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.yebigun.hrbank.global.base.BaseEntity;
 
 
@@ -18,8 +19,7 @@ import org.yebigun.hrbank.global.base.BaseEntity;
 @Entity
 @Getter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@SuperBuilder
 public class BinaryContent extends BaseEntity {
     @Column(name = "file_name", nullable = false)
     private String fileName;

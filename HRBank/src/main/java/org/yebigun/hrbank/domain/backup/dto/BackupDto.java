@@ -16,6 +16,6 @@ public record BackupDto(
     Instant startedAt,
     Instant endedAt,
     BackupStatus status,
-    Integer fileId
+    Long fileId
 ) {
 }

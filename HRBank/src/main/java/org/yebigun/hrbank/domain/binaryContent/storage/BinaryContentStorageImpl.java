@@ -30,8 +30,7 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class BinaryContentStorageImpl implements BinaryContentStorage {
-        private static final String COLUMNS = "ID,직원번호,이름,이메일,부서,직급,입사일,상태";
-//    private static final String COLUMNS = "ID,이름,이메일,직급";
+    private static final String COLUMNS = "ID,직원번호,이름,이메일,부서,직급,입사일,상태";
     private static final String CSV_EXTENTION = ".csv";
     private static final String CSV_CONTENT_TYPE = ".csv";
     private static final String LOG_EXTENTION = "text/csv";
