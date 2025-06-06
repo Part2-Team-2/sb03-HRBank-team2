@@ -44,7 +44,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Transactional(readOnly = true)
     public DepartmentDto find(Long departmentId) {
         Department department = departmentRepository.findById(departmentId)
-            .orElseThrow(() -> new NoSuchElementException("해당 부서는 존재하지 않습니다"));
+            .orElseThrow(() -> new NoSuchElementException("존재하지 않는 부서입니다"));
 
         return departmentMapper.toDto(department);
     }
