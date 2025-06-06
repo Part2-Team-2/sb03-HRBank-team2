@@ -45,4 +45,36 @@ public interface DepartmentApi {
         DepartmentCreateRequest request
     );
 
+    @Operation(summary = "부서 상세 조회")
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = DepartmentDto.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "부서를 찾을 수 없음",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "서버 오류",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    ResponseEntity<DepartmentDto> find(
+        Long id
+    );
+
+
 }

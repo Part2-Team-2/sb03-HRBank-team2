@@ -1,6 +1,7 @@
 package org.yebigun.hrbank.domain.department.service;
 
 import java.time.LocalDate;
+import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,5 +38,14 @@ public class DepartmentServiceImpl implements DepartmentService {
         Department createdDepartment = departmentRepository.save(department);
 
         return departmentMapper.toDto(createdDepartment);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DepartmentDto find(Long departmentId) {
+        Department department = departmentRepository.findById(departmentId)
+            .orElseThrow(() -> new NoSuchElementException("해당 부서는 존재하지 않습니다"));
+
+        return departmentMapper.toDto(department);
     }
 }
