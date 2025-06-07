@@ -2,6 +2,7 @@ package org.yebigun.hrbank.domain.employee.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -23,13 +24,13 @@ public interface EmployeeApi {
             responseCode = "200",
             description = "조회 성공",
             content = @Content(
-                mediaType = "*/*",
-                schema = @Schema(implementation = Long.class)
+                mediaType = "application/json",
+                array = @ArraySchema(schema = @Schema(implementation = EmployeeDistributionDto.class))
             )
         ),
         @ApiResponse(
             responseCode = "400",
-            description = "잘못된 요청",
+            description = "잘못된 요청 또는 지원하지 않는 그룹화 기준",
             content = @Content(
                 mediaType = "*/*",
                 schema = @Schema(implementation = ErrorResponse.class)
