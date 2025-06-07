@@ -14,7 +14,7 @@ import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
-    private final Set<String> VALID_GROUP_BY = Set.of("department", "position");
+    private static final Set<String> VALID_GROUP_BY = Set.of("department", "position");
 
     @Override
     public List<EmployeeDistributionDto> getEmployeeDistribution(String groupBy,
