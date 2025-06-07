@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeLog;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeLogDiff;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeType;
@@ -15,6 +16,7 @@ import org.yebigun.hrbank.domain.employee.entity.Employee;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ChangeLogServiceImpl implements ChangeLogService {
 
     private final ChangeLogRepository changeLogRepository;
@@ -23,6 +25,18 @@ public class ChangeLogServiceImpl implements ChangeLogService {
     @Override
     public void recordChangeLog(Employee beforeValue, Employee afterValue, String memo, String ipAddress, ChangeType changeType) {
 
+        if (changeType == null) {
+            throw new IllegalArgumentException("changeType은 필수입니다");
+        }
+
+        if (changeType == ChangeType.CREATED && afterValue == null) {
+            throw new IllegalArgumentException("CREATED 타입에서는 afterValue가 필수입니다");
+        }
+
+        if ((changeType == ChangeType.UPDATED || changeType == ChangeType.DELETED) && beforeValue == null) {
+            throw new IllegalArgumentException("UPDATED/DELETED 타입에서는 beforeValue가 필수입니다");
+        }
+
         List<ChangeLogDiff> diffs = new ArrayList<>();
 
         switch (changeType) {
@@ -30,11 +44,11 @@ public class ChangeLogServiceImpl implements ChangeLogService {
                 // 생성 시 beforeValue 부재, 필수 afterValue로 채우기
                 diffs.add(createDiff("이름", null, afterValue.getName()));
                 diffs.add(createDiff("이메일", null, afterValue.getEmail()));
-                diffs.add(createDiff("부서명", null, afterValue.getDepartment().getName()));
+                diffs.add(createDiff("부서명", null, afterValue.getDepartment() != null ? afterValue.getDepartment().getName() : null));
                 diffs.add(createDiff("직함", null, afterValue.getPosition()));
                 diffs.add(createDiff("입사일", null, afterValue.getHireDate().toString()));
                 diffs.add(createDiff("사번", null, afterValue.getEmployeeNumber()));
-                diffs.add(createDiff("상태", null, afterValue.getStatus().name()));
+                diffs.add(createDiff("상태", null, afterValue.getStatus() != null ? afterValue.getStatus().name() : null));
                 break;
 
             case UPDATED:
@@ -47,7 +61,7 @@ public class ChangeLogServiceImpl implements ChangeLogService {
                     diffs.add(createDiff("이메일",  beforeValue.getEmail(), afterValue.getEmail()));
                 }
 
-                if (!Objects.equals(beforeValue.getDepartment().getId(), afterValue.getDepartment().getId())) {
+                if (!Objects.equals(beforeValue.getDepartment().getName(), afterValue.getDepartment().getName())) {
                     diffs.add(createDiff("부서명", beforeValue.getDepartment().getName(), afterValue.getDepartment().getName()));
                 }
 
@@ -72,11 +86,11 @@ public class ChangeLogServiceImpl implements ChangeLogService {
                 // 모든 afterValue null 변환
                 diffs.add(createDiff("이름", beforeValue.getName(), null));
                 diffs.add(createDiff("이메일", beforeValue.getEmail(), null));
-                diffs.add(createDiff("부서명", beforeValue.getDepartment().getName(), null));
+                diffs.add(createDiff("부서명", beforeValue.getDepartment() != null ? beforeValue.getDepartment().getName() : null, null));
                 diffs.add(createDiff("직함", beforeValue.getPosition(), null));
                 diffs.add(createDiff("입사일", beforeValue.getHireDate().toString(), null));
                 diffs.add(createDiff("사번", beforeValue.getEmployeeNumber(), null));
-                diffs.add(createDiff("상태", beforeValue.getStatus().name(), null));
+                diffs.add(createDiff("상태", beforeValue.getStatus() != null ? beforeValue.getStatus().name() : null, null));
                 break;
         }
 
