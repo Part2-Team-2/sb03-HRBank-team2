@@ -7,13 +7,13 @@ import org.yebigun.hrbank.domain.changelog.entity.ChangeType;
 
 public record ChangeLogDto(
     Long id,
-    @NotNull
+    @NotNull(message = "변경 타입은 필수입니다")
     ChangeType type,
-    @NotBlank
+    @NotBlank(message = "사원 번호는 필수입니다")
     String employeeNumber,
     String memo,
     String ipAddress,
-    @NotNull
+    @NotNull(message = "수정시각은 필수입니다")
     Instant at
 ) {
 

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yebigun.hrbank.domain.department.dto.data.DepartmentDto;
 import org.yebigun.hrbank.domain.department.dto.request.DepartmentCreateRequest;
+import org.yebigun.hrbank.domain.department.dto.request.DepartmentUpdateRequest;
 import org.yebigun.hrbank.domain.department.entity.Department;
 import org.yebigun.hrbank.domain.department.mapper.DepartmentMapper;
 import org.yebigun.hrbank.domain.department.repository.DepartmentRepository;
@@ -45,6 +46,28 @@ public class DepartmentServiceImpl implements DepartmentService {
     public DepartmentDto findById(Long departmentId) {
         Department department = departmentRepository.findById(departmentId)
             .orElseThrow(() -> new NoSuchElementException("존재하지 않는 부서입니다"));
+
+        return departmentMapper.toDto(department);
+    }
+
+    @Override
+    @Transactional
+    public DepartmentDto update(Long departmentId, DepartmentUpdateRequest request) {
+        String name = request.name();
+        String description = request.description();
+        LocalDate establishedDate = request.establishedDate();
+
+        Department department = departmentRepository.findById(departmentId)
+            .orElseThrow(
+                () -> new NoSuchElementException("존재하지 않는 부서입니다."));
+
+        if (!department.getName().equals(name) && departmentRepository.existsByName(name)) {
+            throw new IllegalArgumentException("이미 존재하는 부서 이름입니다.");
+        }
+
+        department.setName(name);
+        department.setDescription(description);
+        department.setEstablishedDate(establishedDate);
 
         return departmentMapper.toDto(department);
     }

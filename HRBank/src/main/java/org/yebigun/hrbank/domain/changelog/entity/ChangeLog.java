@@ -26,7 +26,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "change_log")
 public class ChangeLog {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
@@ -48,5 +49,4 @@ public class ChangeLog {
 
     @OneToMany(mappedBy = "changeLog", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<ChangeLogDiff> diffs;
-
 }
