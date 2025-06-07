@@ -7,6 +7,6 @@ import org.yebigun.hrbank.domain.changelog.entity.ChangeLogDiff;
 
 public interface ChangeLogDiffRepository extends JpaRepository<ChangeLogDiff,Long> {
 
-    List<ChangeLogDiff> findByChangeLogId(ChangeLog changeLog);
+    List<ChangeLogDiff> findByChangeLog(ChangeLog changeLog);
 
 }
