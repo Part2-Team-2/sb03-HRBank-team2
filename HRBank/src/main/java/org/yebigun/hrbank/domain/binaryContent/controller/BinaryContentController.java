@@ -1,5 +1,7 @@
 package org.yebigun.hrbank.domain.binaryContent.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,21 +18,25 @@ import org.yebigun.hrbank.domain.binaryContent.storage.BinaryContentStorage;
  * Author       : dounguk
  * Date         : 2025. 6. 5.
  */
+@Tag(name = "파일 관리", description = "파일 관리 API")
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("api/binaryContents")
+@RequestMapping("api/files")
 public class BinaryContentController {
     private final BinaryContentService binaryContentService;
     private final BinaryContentStorage binaryContentStorage;
     private final BinaryContentRepository binaryContentRepository;
 
     // id = binary content id
+    @Operation(summary = "파일 다운로드")
     @GetMapping("{id}/download")
     public ResponseEntity<?> downloadBinaryContent(@PathVariable Long id) {
         BinaryContentResponseDto binaryContentResponseDto = binaryContentService.find(id);
         return binaryContentStorage.download(binaryContentResponseDto);
     }
 
+    // 삭제 예정입니다. test only
+    @Operation(summary = "🚨삭제예정 (파일 업로드)")
     @PostMapping("/upload")
     public ResponseEntity<String> uploadTest(@RequestParam("file") MultipartFile file) {
         try {

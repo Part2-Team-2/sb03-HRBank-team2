@@ -2,10 +2,12 @@ package org.yebigun.hrbank.domain.binaryContent.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
 import org.yebigun.hrbank.global.base.BaseEntity;
+
 
 /**
  * PackageName  : org.yebigun.hrbank.binaryContent.entity
@@ -16,7 +18,8 @@ import org.yebigun.hrbank.global.base.BaseEntity;
 @Entity
 @Getter
 @NoArgsConstructor
-@SuperBuilder
+@AllArgsConstructor
+@Builder
 public class BinaryContent extends BaseEntity {
     @Column(name = "file_name", nullable = false)
     private String fileName;
