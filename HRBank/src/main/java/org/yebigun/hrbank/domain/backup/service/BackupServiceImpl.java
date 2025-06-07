@@ -40,6 +40,17 @@ public class BackupServiceImpl implements BackupService {
     private final EmployeeRepository employeeRepository;
 
 
+    @Transactional(readOnly = true)
+    @Override
+    public void findAsACursor(String worker, String status, Instant startedAtFrom, Instant startedAtTo, long idAfter, long cursor, int size, int sortField, String sortDirection) {
+
+
+        // 커서와 조건 기반으로 return
+    }
+
+
+
+
     @Transactional
     @Override
     public BackupDto createBackup(HttpServletRequest request) {

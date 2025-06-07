@@ -51,7 +51,7 @@ public class ChangeLog {
     @Column(name = "ip_address", nullable = false)
     private String ipAddress;
 
-//    @Column(name = "at", nullable = false, columnDefinition = "TIMESTAMPTZ")
+    @Column(name = "at", nullable = false, columnDefinition = "TIMESTAMPTZ")
     private Instant at;
 
     @OneToMany(mappedBy = "changeLog", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

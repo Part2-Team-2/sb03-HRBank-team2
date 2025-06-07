@@ -156,7 +156,7 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
                             employee.getEmployeeNumber(),
                             employee.getName(),
                             employee.getEmail(),
-                            employee.getDepartmentId(),≠
+                            employee.getDepartmentId(),
                             employee.getPosition(),
                             employee.getHireDate(),
                             employee.getStatus()

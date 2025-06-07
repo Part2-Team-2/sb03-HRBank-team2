@@ -12,9 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestHandler;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
 import org.yebigun.hrbank.domain.backup.service.BackupService;
 import org.yebigun.hrbank.domain.department.entity.Department;
@@ -24,6 +22,7 @@ import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 import org.yebigun.hrbank.global.dto.ErrorResponse;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -91,6 +90,34 @@ public class BackupController {
     }
 
 
+    // 필터 [worker, status, startedAtFrom, startedAtTo]
+    // 기본 조회 [size, sortField, sortDirection]
+
+    // cursor =  id
+    // worker = ip
+    // sortField = [startedAt, endedAt, status]
+    // isAfter = 현제 위치
+    // cursor = 기준-> 날짜
+    @GetMapping
+    public ResponseEntity<?> findAll(@RequestParam(required = false) String worker,
+                                     @RequestParam(required = false) String status,
+                                     @RequestParam(required = false) Instant startedAtFrom,
+                                     @RequestParam(required = false) Instant startedAtTo,
+                                     @RequestParam(required = false) long idAfter,
+                                     @RequestParam(required = false) long cursor,
+                                     @RequestParam int size,
+                                     @RequestParam int sortField,
+                                     @RequestParam String sortDirection
+    ) {
+
+        backupService.findAsACursor(worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);
+        return ResponseEntity.ok().body("");
+    }
+
+
+
+
+    // 더미 데이터
     public void dummyDepartments() {
         Department d1 = Department.builder()
             .name("백엔드 개발팀")
@@ -114,8 +141,6 @@ public class BackupController {
         System.out.println("더미 부서 3개 저장 완료");
     }
 
-
-    // 더미 데이터
     public void dummyEmployees(int n) {
         dummyDepartments();
         List<Department> departments = departmentRepository.findAll();
