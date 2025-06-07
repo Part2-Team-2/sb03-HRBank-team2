@@ -45,6 +45,4 @@ public class Backup extends BaseUpdatableEntity {
             this.binaryContent = binaryContent;
         }
     }
-
 }
-
