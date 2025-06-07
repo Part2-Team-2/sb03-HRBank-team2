@@ -6,6 +6,7 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -26,11 +27,15 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
         QEmployee e = QEmployee.employee;
         QDepartment d = QDepartment.department;
 
-        Long totalCount = queryFactory
+        Long totalCount = Optional.ofNullable(queryFactory
             .select(e.count())
             .from(e)
             .where(e.status.eq(status))
-            .fetchOne();
+            .fetchOne()).orElse(0L);
+
+        if (totalCount == 0) {
+            return new ArrayList<>();
+        }
 
         StringPath path = groupBy.equals("department") ? d.name : e.position;
 
@@ -43,7 +48,6 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
             ))
             .from(e)
             .leftJoin(d).on(e.department.id.eq(d.id))
-            .fetchJoin()
             .where(e.status.eq(status))
             .groupBy(path)
             .fetch();
@@ -77,6 +81,4 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
 
         return count;
     }
-
-
 }
