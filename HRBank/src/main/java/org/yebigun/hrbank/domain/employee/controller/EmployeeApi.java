@@ -8,12 +8,46 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
+import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDistributionDto;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.global.dto.ErrorResponse;
 
 @Tag(name = "직원 관리", description = "직원 관리 API")
 public interface EmployeeApi {
+
+    @Operation(summary = "직원 분포 조회")
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = Long.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "잘못된 요청",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "서버 오류",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    ResponseEntity<List<EmployeeDistributionDto>> getEmployeeDistribution(
+        @Parameter(description = "그룹화 기준(department: 부서별, position: 직무별)") String groupBy,
+        @Parameter(description = "직원 상태(재직 중, 휴직 중, 퇴사, 기본값: 재직 중)") EmployeeStatus status
+    );
 
     @Operation(summary = "직원 수 조회")
     @ApiResponses({
