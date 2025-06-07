@@ -5,6 +5,7 @@ import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.List;
@@ -19,9 +20,11 @@ public interface BinaryContentStorage {
 
     Long put(Long BinaryContentId, byte[] bytes);
 
-    BinaryContent putCsv(List<Employee> employees);
-
     InputStream get(Long BinaryContentId);
 
     ResponseEntity<?> download(BinaryContentResponseDto response);
+
+    BinaryContent putCsv(List<Employee> employees);
+
+    BinaryContent putLog(long backupId, Exception e) throws IOException;
 }
