@@ -7,6 +7,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.yebigun.hrbank.domain.backup.Temporary.TempEmployeeDto;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
 import org.yebigun.hrbank.domain.backup.entity.Backup;
 import org.yebigun.hrbank.domain.backup.entity.BackupStatus;
@@ -78,7 +79,7 @@ public class BackupServiceImpl implements BackupService {
     }
 
     private BackupDto processCompletedBackup(Backup.BackupBuilder backupBuilder) {
-        List<Employee> employees = employeeRepository.findAll();
+        List<TempEmployeeDto> employees = toDto(employeeRepository.findAll());
 
         BinaryContent csvFile = binaryContentStorage.putCsv(employees); // 내부에서 삭제
         Backup backup = backupBuilder
@@ -149,4 +150,25 @@ public class BackupServiceImpl implements BackupService {
             return false;
         }
     }
+
+    private List<TempEmployeeDto> toDto(List<Employee> employees) {
+        List<TempEmployeeDto> dtoList = new ArrayList<>();
+
+        for (Employee employee : employees) {
+            TempEmployeeDto employeeDto = TempEmployeeDto.builder()
+                .id(employee.getId())
+                .employeeNumber(employee.getEmployeeNumber())
+                .name(employee.getName())
+                .email(employee.getEmail())
+                .departmentId(employee.getDepartment() != null ? employee.getDepartment().getId() : null)
+                .position(employee.getPosition())
+                .hireDate(employee.getHireDate())
+                .status(employee.getStatus())
+                .build();
+            dtoList.add(employeeDto);
+        }
+
+        return dtoList;
+    }
+
 }

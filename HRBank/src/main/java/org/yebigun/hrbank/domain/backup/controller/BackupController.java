@@ -17,12 +17,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
 import org.yebigun.hrbank.domain.backup.service.BackupService;
+import org.yebigun.hrbank.domain.department.entity.Department;
+import org.yebigun.hrbank.domain.department.repository.DepartmentRepository;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 import org.yebigun.hrbank.global.dto.ErrorResponse;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -37,7 +40,9 @@ import java.util.UUID;
 @RequestMapping("api/backups")
 public class BackupController {
     private final BackupService backupService;
+
     private final EmployeeRepository employeeRepository;
+    private final DepartmentRepository departmentRepository;
 
 
 
@@ -85,15 +90,46 @@ public class BackupController {
         return ResponseEntity.status(200).body(backup);
     }
 
+
+    public void dummyDepartments() {
+        Department d1 = Department.builder()
+            .name("백엔드 개발팀")
+            .description("서버 API 개발 및 유지보수")
+            .establishedDate(LocalDate.of(2020, 1, 1))
+            .build();
+
+        Department d2 = Department.builder()
+            .name("프론트엔드 개발팀")
+            .description("웹 UI 개발 및 유지보수")
+            .establishedDate(LocalDate.of(2021, 5, 1))
+            .build();
+
+        Department d3 = Department.builder()
+            .name("데이터 사이언스팀")
+            .description("데이터 분석 및 모델링")
+            .establishedDate(LocalDate.of(2022, 3, 15))
+            .build();
+
+        departmentRepository.saveAll(List.of(d1, d2, d3));
+        System.out.println("더미 부서 3개 저장 완료");
+    }
+
+
     // 더미 데이터
     public void dummyEmployees(int n) {
+        dummyDepartments();
+        List<Department> departments = departmentRepository.findAll();
+
         for (int i = 1; i <= n+1; i++) {
+            Department randomDept = departments.get(i % departments.size());
+
             Employee employee = Employee.builder()
                 .name("직원" + i)
                 .email("employee" + i + "@test.com")
                 .employeeNumber("EMP-" + UUID.randomUUID())
                 .position("백엔드 개발자")
                 .hireDate(LocalDate.now().minusDays(i * 5))
+                .department(randomDept)
                 .memo("자동 생성된 테스트 데이터")
                 .status(EmployeeStatus.ACTIVE)
                 .build();

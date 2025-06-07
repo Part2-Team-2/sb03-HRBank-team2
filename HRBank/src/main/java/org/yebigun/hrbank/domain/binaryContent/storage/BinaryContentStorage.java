@@ -1,6 +1,7 @@
 package org.yebigun.hrbank.domain.binaryContent.storage;
 
 import org.springframework.http.ResponseEntity;
+import org.yebigun.hrbank.domain.backup.Temporary.TempEmployeeDto;
 import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
@@ -24,7 +25,8 @@ public interface BinaryContentStorage {
 
     ResponseEntity<?> download(BinaryContentResponseDto response);
 
-    BinaryContent putCsv(List<Employee> employees);
+//    BinaryContent putCsv(List<Employee> employees);
+    BinaryContent putCsv(List<TempEmployeeDto> employees);
 
     BinaryContent putLog(long backupId, Exception e) throws IOException;
 }

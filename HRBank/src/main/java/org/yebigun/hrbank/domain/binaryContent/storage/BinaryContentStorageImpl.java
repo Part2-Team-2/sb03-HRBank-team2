@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yebigun.hrbank.domain.backup.Temporary.TempEmployeeDto;
 import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepository;
@@ -43,6 +44,7 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
     private static final String LOG_EXTENTION = ".log";
     private static final String LOG_CONTENT_TYPE = "text/plain";
     private static final String PATH = "uploads";
+
     private final BinaryContentRepository binaryContentRepository;
 
 
@@ -133,7 +135,8 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
     }
 
     @Override
-    public BinaryContent putCsv(List<Employee> employees) {
+//    public BinaryContent putCsv(List<Employee> employees) {
+    public BinaryContent putCsv(List<TempEmployeeDto> employees) {
         UUID tempFileName = UUID.randomUUID();
         Path tempPath = root.resolve(tempFileName + CSV_EXTENTION);
 
@@ -144,7 +147,8 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
             bw.newLine();
 
             if(employees != null || !employees.isEmpty()) {
-                for (Employee employee : employees) {
+//                for (Employee employee : employees) {
+                for (TempEmployeeDto employee : employees) {
                     log.warn("내부 반복");
                     try {
                         bw.write(String.format("%d,%s,%s,%s,%s,%s,%s,%s",
@@ -152,8 +156,7 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
                             employee.getEmployeeNumber(),
                             employee.getName(),
                             employee.getEmail(),
-//                        employee.getDepartment().getId(),
-                            "[employee.getDepartment().getId() <- dto 추가되면 매핑해서 추가]",
+                            employee.getDepartmentId(),≠
                             employee.getPosition(),
                             employee.getHireDate(),
                             employee.getStatus()
@@ -270,4 +273,5 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
             throw new RuntimeException("파일 크기 측정 실패", e);
         }
     }
+
 }
