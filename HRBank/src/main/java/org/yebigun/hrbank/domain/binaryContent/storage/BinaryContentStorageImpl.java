@@ -128,6 +128,10 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         }
     }
 
+    private Path resolvePath(Long id, String extention) {
+        return root.resolve(id.toString() + extention);
+    }
+
     @Override
     public BinaryContent putCsv(List<Employee> employees) {
         UUID tempFileName = UUID.randomUUID();
@@ -186,7 +190,7 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         binaryContentRepository.save(binaryContent);
 
         Path path = resolvePath(binaryContent.getId(), CSV_EXTENTION);
-        // 4. 바이너리 컨텐츠 이름으로 파일이름 수정
+
         try{
             Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
@@ -206,6 +210,44 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         UUID tempFileName = UUID.randomUUID();
         Path tempPath = root.resolve(tempFileName + LOG_EXTENTION);
 
+        String logMessage = generateLogMessage(backupId, exception);
+
+        try { // log 파일 저장
+            Files.write(tempPath, logMessage.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException deleteException) {
+            exception.addSuppressed(deleteException);
+            throw new RuntimeException("로그 저장에 실패했습니다", deleteException);
+        }
+
+        long fileSize = getSize(tempPath);
+
+        BinaryContent binaryContent = BinaryContent.builder()
+            .fileName(backupId + LOG_EXTENTION)
+            .size(fileSize)
+            .contentType(LOG_CONTENT_TYPE)
+            .build();
+        binaryContentRepository.save(binaryContent);
+
+        Path path = resolvePath(binaryContent.getId(), LOG_EXTENTION);
+
+        try{ // 변경된 이름으로 저장
+            Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception deleteException) {
+            Files.deleteIfExists(tempPath);
+            throw new RuntimeException("로그 저장에 실패했습니다", deleteException);
+        }
+        return binaryContent;
+    }
+
+    private String getExtention(String fileName) {
+        int index = fileName.lastIndexOf(".");
+        if (index == -1 || index == fileName.length() - 1) {
+            return "";
+        }
+        return fileName.substring(index);
+    }
+
+    private String generateLogMessage(long backupId, Exception exception) {
         String content =
             """
                 [ERROR] 백업 실패
@@ -218,49 +260,14 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
                 backupId,
                 Instant.now(),
                 exception.getMessage());
+        return content;
+    }
 
-        try {
-            Files.write(tempPath, content.getBytes(StandardCharsets.UTF_8));
-        } catch (IOException deleteException) {
-            exception.addSuppressed(deleteException);
-            throw new RuntimeException("로그 저장에 실패했습니다", deleteException);
-        }
-
-        long fileSize;
+    private Long getSize(Path tempPath) {
         try{
-            fileSize = Files.size(tempPath);
+            return Files.size(tempPath);
         } catch (IOException e) {
             throw new RuntimeException("파일 크기 측정 실패", e);
         }
-
-        BinaryContent binaryContent = BinaryContent.builder()
-            .fileName(backupId + LOG_EXTENTION)
-            .size(fileSize)
-            .contentType(LOG_CONTENT_TYPE)
-            .build();
-        binaryContentRepository.save(binaryContent);
-
-
-        Path path = resolvePath(binaryContent.getId(), LOG_EXTENTION);
-
-        try{
-            Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
-        } catch (Exception deleteException) {
-            Files.deleteIfExists(tempPath);
-            throw new RuntimeException("로그 저장에 실패했습니다", deleteException);
-        }
-        return binaryContent;
-    }
-
-    private Path resolvePath(Long id, String extention) {
-        return root.resolve(id.toString() + extention);
-    }
-
-    private String getExtention(String fileName) {
-        int index = fileName.lastIndexOf(".");
-        if (index == -1 || index == fileName.length() - 1) {
-            return "";
-        }
-        return fileName.substring(index);
     }
 }
