@@ -11,11 +11,11 @@ import java.time.Instant;
  * Date         : 2025. 6. 6.
  */
 public record BackupDto(
-    Integer id,
+    Long id,
     String worker,
     Instant startedAt,
     Instant endedAt,
     BackupStatus status,
-    Integer fileId
+    Long fileId
 ) {
 }

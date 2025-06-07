@@ -3,6 +3,7 @@ package org.yebigun.hrbank.domain.binaryContent.storage;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -31,13 +32,12 @@ import static org.yebigun.hrbank.domain.binaryContent.entity.QBinaryContent.bina
  * Author       : dounguk
  * Date         : 2025. 6. 5.
  */
-
+@Log4j2
 @Transactional
 @Service
 @RequiredArgsConstructor
 public class BinaryContentStorageImpl implements BinaryContentStorage {
-        private static final String COLUMNS = "ID,직원번호,이름,이메일,부서,직급,입사일,상태";
-//    private static final String COLUMNS = "ID,이름,이메일,직급";
+    private static final String COLUMNS = "ID,직원번호,이름,이메일,부서,직급,입사일,상태";
     private static final String CSV_EXTENTION = ".csv";
     private static final String CSV_CONTENT_TYPE = "text/csv";
     private static final String LOG_EXTENTION = ".log";
@@ -128,38 +128,45 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         }
     }
 
+    private Path resolvePath(Long id, String extention) {
+        return root.resolve(id.toString() + extention);
+    }
+
     @Override
     public BinaryContent putCsv(List<Employee> employees) {
-        // 1. 유저 전부 불러오고
-        // 2. UUID를 이름으로 파일 만들고
-        //      (1). UUID 생성
         UUID tempFileName = UUID.randomUUID();
         Path tempPath = root.resolve(tempFileName + CSV_EXTENTION);
 
+        log.warn("파일 생성 시작");
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(tempPath.toFile()))) {
-            //      (2). column 추가
+            log.warn("파일 생성");
             bw.write(COLUMNS);
             bw.newLine();
-            //      (3). employee 정보 추가
-            for (Employee employee : employees) {
-                try{
-                    bw.write(String.format("%d,%s,%s,%s,%s,%s,%s,%s",
-                        employee.getId(),
-                        employee.getEmployeeNumber(),
-                        employee.getName(),
-                        employee.getEmail(),
-//                        employee.getDepartment().getId(),
-                        "[employee.getDepartment().getId() <- dto 추가되면 매핑해서 추가]",
-                        employee.getPosition(),
-                        employee.getHireDate(),
-                        employee.getStatus()
-                    ));
-                    bw.newLine();
-                } catch (Exception e){
+
+            if(employees != null || !employees.isEmpty()) {
+                for (Employee employee : employees) {
+                    log.warn("내부 반복");
                     try {
-                        Files.deleteIfExists(tempPath);
-                    } catch (IOException deleteException) {
-                        e.addSuppressed(deleteException);
+                        bw.write(String.format("%d,%s,%s,%s,%s,%s,%s,%s",
+                            employee.getId(),
+                            employee.getEmployeeNumber(),
+                            employee.getName(),
+                            employee.getEmail(),
+//                        employee.getDepartment().getId(),
+                            "[employee.getDepartment().getId() <- dto 추가되면 매핑해서 추가]",
+                            employee.getPosition(),
+                            employee.getHireDate(),
+                            employee.getStatus()
+                        ));
+                        bw.newLine();
+                    } catch (Exception e) {
+                        log.warn("직원 정보 쓰기 실패: " + employee.getId(), e);
+                        try {
+                            Files.deleteIfExists(tempPath);
+                            log.warn("CSV 파일 삭제");
+                        } catch (IOException deleteException) {
+                            e.addSuppressed(deleteException);
+                        }
                     }
                 }
             }
@@ -168,12 +175,11 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
             throw new RuntimeException("파일 생성중 오류 발생", e);
         }
 
-        // 3. 파일로 바이너리 컨텐츠 만들고
         long fileSize;
         try{
             fileSize = Files.size(tempPath);
         } catch (IOException e) {
-            throw new RuntimeException("파일 저장에 실패했습니다", e);
+            throw new RuntimeException("파일 사이즈 계산에 실패했습니다", e);
         }
 
         BinaryContent binaryContent = BinaryContent.builder()
@@ -184,7 +190,7 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         binaryContentRepository.save(binaryContent);
 
         Path path = resolvePath(binaryContent.getId(), CSV_EXTENTION);
-        // 4. 바이너리 컨텐츠 이름으로 파일이름 수정
+
         try{
             Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
@@ -204,6 +210,44 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         UUID tempFileName = UUID.randomUUID();
         Path tempPath = root.resolve(tempFileName + LOG_EXTENTION);
 
+        String logMessage = generateLogMessage(backupId, exception);
+
+        try { // log 파일 저장
+            Files.write(tempPath, logMessage.getBytes(StandardCharsets.UTF_8));
+        } catch (IOException deleteException) {
+            exception.addSuppressed(deleteException);
+            throw new RuntimeException("로그 저장에 실패했습니다", deleteException);
+        }
+
+        long fileSize = getSize(tempPath);
+
+        BinaryContent binaryContent = BinaryContent.builder()
+            .fileName(backupId + LOG_EXTENTION)
+            .size(fileSize)
+            .contentType(LOG_CONTENT_TYPE)
+            .build();
+        binaryContentRepository.save(binaryContent);
+
+        Path path = resolvePath(binaryContent.getId(), LOG_EXTENTION);
+
+        try{ // 변경된 이름으로 저장
+            Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
+        } catch (Exception deleteException) {
+            Files.deleteIfExists(tempPath);
+            throw new RuntimeException("로그 저장에 실패했습니다", deleteException);
+        }
+        return binaryContent;
+    }
+
+    private String getExtention(String fileName) {
+        int index = fileName.lastIndexOf(".");
+        if (index == -1 || index == fileName.length() - 1) {
+            return "";
+        }
+        return fileName.substring(index);
+    }
+
+    private String generateLogMessage(long backupId, Exception exception) {
         String content =
             """
                 [ERROR] 백업 실패
@@ -216,49 +260,14 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
                 backupId,
                 Instant.now(),
                 exception.getMessage());
+        return content;
+    }
 
-        try {
-            Files.write(tempPath, content.getBytes(StandardCharsets.UTF_8));
-        } catch (IOException deleteException) {
-            exception.addSuppressed(deleteException);
-            throw new RuntimeException("로그 저장에 실패했습니다", deleteException);
-        }
-
-        long fileSize;
+    private Long getSize(Path tempPath) {
         try{
-            fileSize = Files.size(tempPath);
+            return Files.size(tempPath);
         } catch (IOException e) {
             throw new RuntimeException("파일 크기 측정 실패", e);
         }
-
-        BinaryContent binaryContent = BinaryContent.builder()
-            .fileName(tempFileName + LOG_EXTENTION)
-            .size(fileSize)
-            .contentType(LOG_CONTENT_TYPE)
-            .build();
-        binaryContentRepository.save(binaryContent);
-
-
-        Path path = resolvePath(binaryContent.getId(), LOG_EXTENTION);
-
-        try{
-            Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
-        } catch (Exception deleteException) {
-            Files.deleteIfExists(tempPath);
-            throw new RuntimeException("로그 저장에 실패했습니다", deleteException);
-        }
-        return binaryContent;
-    }
-
-    private Path resolvePath(Long id, String extention) {
-        return root.resolve(id.toString() + extention);
-    }
-
-    private String getExtention(String fileName) {
-        int index = fileName.lastIndexOf(".");
-        if (index == -1 || index == fileName.length() - 1) {
-            return "";
-        }
-        return fileName.substring(index);
     }
 }
