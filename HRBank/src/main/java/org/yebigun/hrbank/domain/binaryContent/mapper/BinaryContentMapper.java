@@ -14,6 +14,5 @@ import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 
 @Mapper(componentModel = "spring")
 public interface BinaryContentMapper {
-    BinaryContentMapper INSTANCE = Mappers.getMapper(BinaryContentMapper.class);
     BinaryContentResponseDto toDto(BinaryContent binaryContent);
 }
