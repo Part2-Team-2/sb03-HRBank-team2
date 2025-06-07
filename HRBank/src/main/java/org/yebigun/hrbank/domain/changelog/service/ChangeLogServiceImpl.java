@@ -86,11 +86,11 @@ public class ChangeLogServiceImpl implements ChangeLogService {
                 // 모든 afterValue null 변환
                 diffs.add(createDiff("이름", beforeValue.getName(), null));
                 diffs.add(createDiff("이메일", beforeValue.getEmail(), null));
-                diffs.add(createDiff("부서명", beforeValue.getDepartment().getName(), null));
+                diffs.add(createDiff("부서명", beforeValue.getDepartment() != null ? beforeValue.getDepartment().getName() : null, null));
                 diffs.add(createDiff("직함", beforeValue.getPosition(), null));
                 diffs.add(createDiff("입사일", beforeValue.getHireDate().toString(), null));
                 diffs.add(createDiff("사번", beforeValue.getEmployeeNumber(), null));
-                diffs.add(createDiff("상태", beforeValue.getStatus().name(), null));
+                diffs.add(createDiff("상태", beforeValue.getStatus() != null ? beforeValue.getStatus().name() : null, null));
                 break;
         }
 
