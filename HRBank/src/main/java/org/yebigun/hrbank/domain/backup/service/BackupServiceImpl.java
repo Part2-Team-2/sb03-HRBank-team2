@@ -25,6 +25,7 @@ import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.backup.service
@@ -67,9 +68,6 @@ public class BackupServiceImpl implements BackupService {
         List<Backup> backups = getRequestedBackups(
             worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);
 
-//        List<BackupDto> backupDtos = backups.stream().map(backupMapper::toDto).toList();
-
-
         boolean hasNext = backups.size() > size;
         Instant nextCursor = null;
         long nextIdAfter = 0;
@@ -89,6 +87,36 @@ public class BackupServiceImpl implements BackupService {
             .totalElements(totalElements)
             .build();
         return response;
+    }
+
+    @Override
+    public BackupDto createBackup(HttpServletRequest request) {
+        Backup.BackupBuilder backupBuilder = Backup.builder()
+            .startedAtFrom(Instant.now())
+            .employeeIp(getIp(request));
+
+        // 변경 감지 : 가장 최근 완료된 배치 작업 시간 이후 직원 데이터가 변경된 경우에 데이터 백업이 필요한 것으로 간주합니다.
+        Optional<Instant> created = employeeRepository.findTopByOrderByCreatedAtDesc().map(employee -> employee.getCreatedAt());
+        Optional<Instant> updated = employeeRepository.findTopByOrderByUpdatedAtDesc().map(employee -> employee.getUpdatedAt());
+        Optional<Instant> latestBackup = backupRepository.findTopByOrderByCreatedAtDesc().map(backup -> backup.getCreatedAt());
+
+
+        if (created.isPresent() && updated.isPresent() && latestBackup.isPresent()) {
+            if (!updated.get().isAfter(latestBackup.get()) && !created.get().isAfter(latestBackup.get())) {
+                log.warn("변경사항 없음");
+                return processSkippedBackup(backupBuilder);
+            }
+        }
+
+        log.warn("변경사항 있음");
+        try{
+            log.warn("변경사항 저장");
+            return processCompletedBackup(backupBuilder);
+        } catch (Exception e) {
+            log.warn("변경사항 실패");
+            return processFailedBackup(backupBuilder,e);
+        }
+
     }
 
     private List<Backup> getRequestedBackups(
@@ -144,35 +172,6 @@ public class BackupServiceImpl implements BackupService {
             case "status" -> new OrderSpecifier<>(orderBy, backup.backupStatus);
             default -> new OrderSpecifier<>(orderBy, backup.id);
         };
-    }
-
-
-
-
-    @Transactional
-    @Override
-    public BackupDto createBackup(HttpServletRequest request) {
-        Backup.BackupBuilder backupBuilder = Backup.builder()
-            .startedAtFrom(Instant.now())
-            .employeeIp(getIp(request));
-
-        // 변경 감지 : 가장 최근 완료된 배치 작업 시간 이후 직원 데이터가 변경된 경우에 데이터 백업이 필요한 것으로 간주합니다.
-        boolean change = true;
-
-        if (!change) {
-            log.warn("변경사항 없음");
-            return processSkippedBackup(backupBuilder);
-        }
-
-        log.warn("변경사항 있음");
-        try{
-            log.warn("변경사항 저장");
-            return processCompletedBackup(backupBuilder);
-        } catch (Exception e) {
-            log.warn("변경사항 실패");
-            return processFailedBackup(backupBuilder,e);
-        }
-
     }
 
 

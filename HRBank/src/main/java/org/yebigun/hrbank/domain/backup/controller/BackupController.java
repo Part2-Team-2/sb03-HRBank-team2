@@ -97,15 +97,16 @@ public class BackupController {
     }
 
     @GetMapping
-    public ResponseEntity<?> findAll(@RequestParam(required = false) String worker,
-                                     @RequestParam(required = false) String status,
-                                     @RequestParam(required = false) Instant startedAtFrom,
-                                     @RequestParam(required = false) Instant startedAtTo,
-                                     @RequestParam(required = false) Long idAfter,
-                                     @RequestParam(required = false) Instant cursor,
-                                     @RequestParam int size,
-                                     @RequestParam String sortField,
-                                     @RequestParam String sortDirection
+    public ResponseEntity<?> findAll(
+        @RequestParam(required = false) String worker,
+        @RequestParam(required = false) String status,
+        @RequestParam(required = false) Instant startedAtFrom,
+        @RequestParam(required = false) Instant startedAtTo,
+        @RequestParam(required = false) Long idAfter,
+        @RequestParam(required = false) Instant cursor,
+        @RequestParam int size,
+        @RequestParam String sortField,
+        @RequestParam String sortDirection
     ) {
 
         CursorPageResponseBackupDto asACursor = backupService.findAsACursor(worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);
