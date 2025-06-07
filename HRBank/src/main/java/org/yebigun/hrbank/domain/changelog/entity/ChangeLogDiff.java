@@ -22,7 +22,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "change_log_diff")
 public class ChangeLogDiff {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
 
