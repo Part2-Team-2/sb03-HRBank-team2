@@ -79,9 +79,8 @@ public class BackupServiceImpl implements BackupService {
 
     private BackupDto processCompletedBackup(Backup.BackupBuilder backupBuilder) {
         List<Employee> employees = employeeRepository.findAll();
-        // 2. CSV 파일 생성 - 실패시 내부 로직에서 csv 파일 삭제
 
-        BinaryContent csvFile = binaryContentStorage.putCsv(employees);
+        BinaryContent csvFile = binaryContentStorage.putCsv(employees); // 내부에서 삭제
         Backup backup = backupBuilder
             .backupStatus(BackupStatus.COMPLETED)
             .startedAtTo(Instant.now())
@@ -103,7 +102,6 @@ public class BackupServiceImpl implements BackupService {
         try {
             BinaryContent logFile = binaryContentStorage.putLog(backup.getId(), exception);
             backup.addLogFile(logFile);
-
             return backupMapper.toDto(backup);
         } catch (Exception e) {
             throw new RuntimeException(e);
