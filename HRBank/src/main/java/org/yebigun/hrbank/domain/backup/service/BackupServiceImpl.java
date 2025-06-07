@@ -87,13 +87,14 @@ public class BackupServiceImpl implements BackupService {
             Backup backup = backupBuilder.build();
             backupRepository.save(backup);
 
+            try{
 
-            BinaryContent logFile = null;
-//            BinaryContent logFile = binaryContentStorage.putLog(exception);
-
-            backup.updateFile(logFile);
-
-            return backupMapper.toDto(backup);
+                BinaryContent logFile = binaryContentStorage.putLog(backup.getId(), exception);
+                backup.addLogFile(logFile);
+                return backupMapper.toDto(backup);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
