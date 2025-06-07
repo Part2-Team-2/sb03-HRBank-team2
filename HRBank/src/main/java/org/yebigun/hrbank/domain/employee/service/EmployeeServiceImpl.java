@@ -18,6 +18,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     public List<EmployeeDistributionDto> getEmployeeDistribution(String groupBy,
         EmployeeStatus status) {
 
+        if (!groupBy.equals("department") && !groupBy.equals("position")) {
+            throw new IllegalArgumentException("지원하지 않는 그룹화 기준입니다.");
+        }
+
         List<EmployeeDistributionDto> employees = employeeRepository.findEmployeeByStatusGroupByDepartmentOrPosition(
             groupBy, status);
 
