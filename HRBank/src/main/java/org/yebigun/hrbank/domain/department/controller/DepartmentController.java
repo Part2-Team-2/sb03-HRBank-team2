@@ -47,7 +47,7 @@ public class DepartmentController implements DepartmentApi {
     @PatchMapping("/{id}")
     public ResponseEntity<DepartmentDto> update(
         @PathVariable("id") Long id,
-        @RequestBody DepartmentUpdateRequest request
+        @RequestBody @Valid DepartmentUpdateRequest request
     ) {
         DepartmentDto department = departmentService.update(id, request);
 
