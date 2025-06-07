@@ -117,4 +117,39 @@ public interface DepartmentApi {
         @Parameter(name = "id", description = "부서 ID", required = true) Long id,
         DepartmentUpdateRequest request
     );
+
+    @Operation(summary = "부서 삭제")
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "204",
+            description = "삭제 성공"
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "소속 직원이 있는 부서는 삭제할 수 없음",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "부서를 찾을 수 없음",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "서버 오류",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    ResponseEntity<Void> delete(
+        @Parameter(name = "id", description = "부서 ID", required = true) Long id
+    );
 }
