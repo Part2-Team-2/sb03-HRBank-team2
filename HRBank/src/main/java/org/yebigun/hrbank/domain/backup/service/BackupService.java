@@ -1,9 +1,8 @@
 package org.yebigun.hrbank.domain.backup.service;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
+import org.yebigun.hrbank.domain.backup.dto.CursorPageResponseBackupDto;
 
 import java.time.Instant;
 
@@ -16,5 +15,5 @@ import java.time.Instant;
 public interface BackupService {
     BackupDto createBackup(HttpServletRequest request);
 
-    void findAsACursor(String worker, String status, Instant startedAtFrom, Instant startedAtTo, long idAfter, long cursor, int size, int sortField, String sortDirection);
+    CursorPageResponseBackupDto findAsACursor(String worker, String status, Instant startedAtFrom, Instant startedAtTo, Long idAfter, Instant cursor, int size, String sortField, String sortDirection);
 }

@@ -1,23 +1,26 @@
 package org.yebigun.hrbank.domain.backup.service;
 
+import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.servlet.http.HttpServletRequest;
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.yebigun.hrbank.domain.backup.Temporary.TempEmployeeDto;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
+import org.yebigun.hrbank.domain.backup.dto.CursorPageResponseBackupDto;
 import org.yebigun.hrbank.domain.backup.entity.Backup;
 import org.yebigun.hrbank.domain.backup.entity.BackupStatus;
+import org.yebigun.hrbank.domain.backup.entity.QBackup;
 import org.yebigun.hrbank.domain.backup.mapper.BackupMapper;
 import org.yebigun.hrbank.domain.backup.repository.BackupRepository;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.storage.BinaryContentStorage;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
-import org.yebigun.hrbank.domain.employee.service.EmployeeService;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -34,18 +37,113 @@ import java.util.List;
 @RequiredArgsConstructor
 @Service
 public class BackupServiceImpl implements BackupService {
+    private static final String STARTED_AT = "startedAt";
+    private static final String ENDED_AT = "endedAt";
+    private static final String STATUS = "status";
+
+
+
     private final BackupRepository backupRepository;
     private final BackupMapper backupMapper;
     private final BinaryContentStorage binaryContentStorage;
     private final EmployeeRepository employeeRepository;
+    private final JPAQueryFactory queryFactory;
 
 
     @Transactional(readOnly = true)
     @Override
-    public void findAsACursor(String worker, String status, Instant startedAtFrom, Instant startedAtTo, long idAfter, long cursor, int size, int sortField, String sortDirection) {
+    public CursorPageResponseBackupDto findAsACursor(
+        String worker
+        , String status
+        , Instant startedAtFrom
+        , Instant startedAtTo
+        , Long idAfter // 백업 id index 231
+        , Instant cursor // Instant 마지막 요소의 날짜
+        , int size // 30
+        , String sortField // "startedAt", "endedAt", "status"
+        , String sortDirection // DESC, ASC
+    ) {
+        long totalElements = backupRepository.count();
+        List<Backup> backups = getRequestedBackups(
+            worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);
+
+//        List<BackupDto> backupDtos = backups.stream().map(backupMapper::toDto).toList();
 
 
-        // 커서와 조건 기반으로 return
+        boolean hasNext = backups.size() > size;
+        Instant nextCursor = null;
+        long nextIdAfter = 0;
+        if(hasNext) {
+            backups = backups.subList(0, size);
+            nextCursor = backups.get(backups.size() - 1).getStartedAtFrom();
+            nextIdAfter = backups.get(backups.size() - 1).getId();
+        }
+
+        List<BackupDto> backupDtos = backups.stream().map(backupMapper::toDto).toList();
+
+        CursorPageResponseBackupDto response = CursorPageResponseBackupDto.builder()
+            .content(backupDtos)
+            .nextCursor(nextCursor)
+            .hasNext(hasNext)
+            .nextIdAfter(nextIdAfter)
+            .totalElements(totalElements)
+            .build();
+        return response;
+    }
+
+    private List<Backup> getRequestedBackups(
+        String worker, String status, Instant startedAtFrom, Instant startedAtTo, Long idAfter, Instant cursor, int size, String sortField, String sortDirection) {
+
+        QBackup qBackup = QBackup.backup;
+        BooleanBuilder where = new BooleanBuilder();
+        if(worker != null) {
+            where.and(qBackup.employeeIp.contains(worker));
+        }
+        if(status != null) {
+            where.and(qBackup.backupStatus.eq(BackupStatus.valueOf(status)));
+        }
+        if(startedAtFrom != null) {
+            where.and(qBackup.createdAt.goe(startedAtFrom));
+        }
+        if(startedAtTo != null) {
+            where.and(qBackup.createdAt.loe(startedAtTo));
+        }
+
+        Order orderBy = sortDirection.equalsIgnoreCase("ASC") ? Order.ASC : Order.DESC;
+
+        // started at 기준 오름차순
+        if (cursor != null) {
+            if (STARTED_AT.equals(sortField)) {
+                where.and(orderBy == Order.ASC
+                    ? qBackup.startedAtFrom.gt(cursor) : qBackup.startedAtFrom.lt(cursor));
+            } else if (ENDED_AT.equals(sortField)) {
+                where.and(orderBy == Order.ASC
+                    ? qBackup.startedAtTo.gt(cursor) : qBackup.startedAtTo.lt(cursor));
+            } else if (STATUS.equals(sortField)) {
+                where.and(orderBy == Order.ASC
+                    ? qBackup.backupStatus.gt(BackupStatus.valueOf(status)) :
+                    qBackup.backupStatus.lt(BackupStatus.valueOf(status))
+                );
+            }
+        }
+
+        List<Backup> backups = queryFactory
+            .selectFrom(qBackup)
+            .where(where)
+            .orderBy(getOrderSpecifier(sortField, orderBy, qBackup))
+            .limit(size)
+            .fetch();
+
+        return backups;
+    }
+
+    private OrderSpecifier<?> getOrderSpecifier(String sortField, Order orderBy, QBackup backup) {
+        return switch (sortField) {
+            case "startedAt" -> new OrderSpecifier<>(orderBy, backup.startedAtFrom);
+            case "endedAt" -> new OrderSpecifier<>(orderBy, backup.startedAtTo);
+            case "status" -> new OrderSpecifier<>(orderBy, backup.backupStatus);
+            default -> new OrderSpecifier<>(orderBy, backup.id);
+        };
     }
 
 

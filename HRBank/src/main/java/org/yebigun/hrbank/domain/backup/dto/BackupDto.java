@@ -1,5 +1,8 @@
 package org.yebigun.hrbank.domain.backup.dto;
 
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 import org.yebigun.hrbank.domain.backup.entity.BackupStatus;
 
 import java.time.Instant;
@@ -10,6 +13,7 @@ import java.time.Instant;
  * Author       : dounguk
  * Date         : 2025. 6. 6.
  */
+@Builder
 public record BackupDto(
     Long id,
     String worker,

@@ -9,11 +9,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.bind.annotation.*;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
+import org.yebigun.hrbank.domain.backup.dto.CursorPageResponseBackupDto;
 import org.yebigun.hrbank.domain.backup.service.BackupService;
 import org.yebigun.hrbank.domain.department.entity.Department;
 import org.yebigun.hrbank.domain.department.repository.DepartmentRepository;
@@ -83,7 +85,7 @@ public class BackupController {
     @PostMapping
     public ResponseEntity<BackupDto> createBackup(HttpServletRequest request) {
         // 삭제 필요
-        dummyEmployees(10);
+        dummyEmployees(100);
 
         BackupDto backup = backupService.createBackup(request);
         return ResponseEntity.status(200).body(backup);
@@ -103,15 +105,15 @@ public class BackupController {
                                      @RequestParam(required = false) String status,
                                      @RequestParam(required = false) Instant startedAtFrom,
                                      @RequestParam(required = false) Instant startedAtTo,
-                                     @RequestParam(required = false) long idAfter,
-                                     @RequestParam(required = false) long cursor,
+                                     @RequestParam(required = false) Long idAfter,
+                                     @RequestParam(required = false) Instant cursor,
                                      @RequestParam int size,
-                                     @RequestParam int sortField,
+                                     @RequestParam String sortField,
                                      @RequestParam String sortDirection
     ) {
 
-        backupService.findAsACursor(worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);
-        return ResponseEntity.ok().body("");
+        CursorPageResponseBackupDto asACursor = backupService.findAsACursor(worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);
+        return ResponseEntity.ok().body(asACursor);
     }
 
 

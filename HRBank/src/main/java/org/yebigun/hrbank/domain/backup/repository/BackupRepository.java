@@ -3,6 +3,8 @@ package org.yebigun.hrbank.domain.backup.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.yebigun.hrbank.domain.backup.entity.Backup;
 
+import java.util.List;
+
 /**
  * PackageName  : org.yebigun.hrbank.domain.backup.repository
  * FileName     : BackupRepository
