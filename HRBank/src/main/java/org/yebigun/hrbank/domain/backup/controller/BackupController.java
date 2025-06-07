@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.bind.annotation.*;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
@@ -27,7 +28,9 @@ import org.yebigun.hrbank.global.dto.ErrorResponse;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.backup.controller
@@ -44,7 +47,7 @@ public class BackupController {
 
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
-
+    boolean trigger = true;
 
 
     @Operation(summary = "데이터 백업 생성")
@@ -84,22 +87,15 @@ public class BackupController {
     })
     @PostMapping
     public ResponseEntity<BackupDto> createBackup(HttpServletRequest request) {
-        // 삭제 필요
-        dummyEmployees(100);
+        if(trigger) {
+            dummyEmployees(100);
+            trigger = false;
+        }
 
         BackupDto backup = backupService.createBackup(request);
         return ResponseEntity.status(200).body(backup);
     }
 
-
-    // 필터 [worker, status, startedAtFrom, startedAtTo]
-    // 기본 조회 [size, sortField, sortDirection]
-
-    // cursor =  id
-    // worker = ip
-    // sortField = [startedAt, endedAt, status]
-    // isAfter = 현제 위치
-    // cursor = 기준-> 날짜
     @GetMapping
     public ResponseEntity<?> findAll(@RequestParam(required = false) String worker,
                                      @RequestParam(required = false) String status,
@@ -117,37 +113,12 @@ public class BackupController {
     }
 
 
-
-
-    // 더미 데이터
-    public void dummyDepartments() {
-        Department d1 = Department.builder()
-            .name("백엔드 개발팀")
-            .description("서버 API 개발 및 유지보수")
-            .establishedDate(LocalDate.of(2020, 1, 1))
-            .build();
-
-        Department d2 = Department.builder()
-            .name("프론트엔드 개발팀")
-            .description("웹 UI 개발 및 유지보수")
-            .establishedDate(LocalDate.of(2021, 5, 1))
-            .build();
-
-        Department d3 = Department.builder()
-            .name("데이터 사이언스팀")
-            .description("데이터 분석 및 모델링")
-            .establishedDate(LocalDate.of(2022, 3, 15))
-            .build();
-
-        departmentRepository.saveAll(List.of(d1, d2, d3));
-        System.out.println("더미 부서 3개 저장 완료");
-    }
-
+    @Transactional
     public void dummyEmployees(int n) {
-        dummyDepartments();
+        dummyDepartments(); // 부서 중복 insert 방지
         List<Department> departments = departmentRepository.findAll();
 
-        for (int i = 1; i <= n+1; i++) {
+        for (int i = 1; i <= n; i++) {
             Department randomDept = departments.get(i % departments.size());
 
             Employee employee = Employee.builder()
@@ -160,9 +131,34 @@ public class BackupController {
                 .memo("자동 생성된 테스트 데이터")
                 .status(EmployeeStatus.ACTIVE)
                 .build();
+
             employeeRepository.save(employee);
         }
 
         System.out.println("직원 " + n + "명 저장 완료");
     }
+    private void dummyDepartments() {
+        Map<String, Department> existingDepartments = departmentRepository.findAll().stream()
+            .collect(Collectors.toMap(Department::getName, d -> d));
+
+        insertIfNotExists(existingDepartments, "백엔드 개발팀", "서버 개발을 담당하는 팀", LocalDate.of(2020, 1, 1));
+        insertIfNotExists(existingDepartments, "프론트엔드 개발팀", "UI 개발을 담당하는 팀", LocalDate.of(2021, 1, 1));
+        insertIfNotExists(existingDepartments, "기획팀", "서비스 기획을 담당하는 팀", LocalDate.of(2022, 1, 1));
+    }
+
+    private void insertIfNotExists(Map<String, Department> existingMap, String name, String description, LocalDate date) {
+        if (!existingMap.containsKey(name)) {
+            Department department = Department.builder()
+                .name(name)
+                .description(description)
+                .establishedDate(date)
+                .build();
+            departmentRepository.save(department);
+        }
+    }
+
+
+
+
+
 }
