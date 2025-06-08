@@ -17,6 +17,7 @@ import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepository;
 import org.yebigun.hrbank.domain.binaryContent.service.BinaryContentService;
+import org.yebigun.hrbank.domain.binaryContent.storage.BackupBinaryContentStorage;
 import org.yebigun.hrbank.domain.binaryContent.storage.BinaryContentStorage;
 import org.yebigun.hrbank.global.dto.ErrorResponse;
 
@@ -32,7 +33,7 @@ import org.yebigun.hrbank.global.dto.ErrorResponse;
 @RequestMapping("api/files")
 public class BinaryContentController {
     private final BinaryContentService binaryContentService;
-    private final BinaryContentStorage binaryContentStorage;
+    private final BackupBinaryContentStorage binaryContentStorage;
     private final BinaryContentRepository binaryContentRepository;
 
     // id = binary content id

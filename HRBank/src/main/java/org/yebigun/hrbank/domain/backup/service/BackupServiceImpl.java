@@ -18,6 +18,7 @@ import org.yebigun.hrbank.domain.backup.entity.QBackup;
 import org.yebigun.hrbank.domain.backup.mapper.BackupMapper;
 import org.yebigun.hrbank.domain.backup.repository.BackupRepository;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
+import org.yebigun.hrbank.domain.binaryContent.storage.BackupBinaryContentStorage;
 import org.yebigun.hrbank.domain.binaryContent.storage.BinaryContentStorage;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
@@ -46,48 +47,13 @@ public class BackupServiceImpl implements BackupService {
 
     private final BackupRepository backupRepository;
     private final BackupMapper backupMapper;
-    private final BinaryContentStorage binaryContentStorage;
+    //    private final BinaryContentStorage binaryContentStorage;
+    private final BackupBinaryContentStorage binaryContentStorage;
     private final EmployeeRepository employeeRepository;
     private final JPAQueryFactory queryFactory;
 
 
-    @Transactional(readOnly = true)
-    @Override
-    public CursorPageResponseBackupDto findAsACursor(
-        String worker
-        , String status
-        , Instant startedAtFrom
-        , Instant startedAtTo
-        , Long idAfter // 백업 id index 231
-        , Instant cursor // Instant 마지막 요소의 날짜
-        , int size // 30
-        , String sortField // "startedAt", "endedAt", "status"
-        , String sortDirection // DESC, ASC
-    ) {
-        long totalElements = backupRepository.count();
-        List<Backup> backups = getRequestedBackups(
-            worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);
 
-        boolean hasNext = backups.size() > size;
-        Instant nextCursor = null;
-        long nextIdAfter = 0;
-        if(hasNext) {
-            backups = backups.subList(0, size);
-            nextCursor = backups.get(backups.size() - 1).getStartedAtFrom();
-            nextIdAfter = backups.get(backups.size() - 1).getId();
-        }
-
-        List<BackupDto> backupDtos = backups.stream().map(backupMapper::toDto).toList();
-
-        CursorPageResponseBackupDto response = CursorPageResponseBackupDto.builder()
-            .content(backupDtos)
-            .nextCursor(nextCursor)
-            .hasNext(hasNext)
-            .nextIdAfter(nextIdAfter)
-            .totalElements(totalElements)
-            .build();
-        return response;
-    }
 
     @Override
     public BackupDto createBackup(HttpServletRequest request) {
@@ -117,6 +83,53 @@ public class BackupServiceImpl implements BackupService {
             return processFailedBackup(backupBuilder,e);
         }
 
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public CursorPageResponseBackupDto findAsACursor(
+        String worker
+        , String status
+        , Instant startedAtFrom
+        , Instant startedAtTo
+        , Long idAfter // 백업 id index 231
+        , Instant cursor // Instant 마지막 요소의 날짜
+        , int size // 30
+        , String sortField // "startedAt", "endedAt", "status"
+        , String sortDirection // DESC, ASC
+    ) {
+        long totalElements = backupRepository.count();
+        List<Backup> backups = getRequestedBackups(
+            worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);
+
+
+        boolean hasNext = backups.size() > size;
+        Instant nextCursor = null;
+        long nextIdAfter = 0;
+
+        if(hasNext) {
+            backups = backups.subList(0, size);
+            Backup lastBackup = backups.get(backups.size() - 1);
+            nextIdAfter = lastBackup.getId();
+
+            switch (sortField){
+                case "createdAt" -> nextCursor = lastBackup.getStartedAtFrom();
+                case "updatedAt" -> nextCursor = lastBackup.getStartedAtTo();
+                case "status" -> nextCursor = null;
+                default -> nextCursor = lastBackup.getStartedAtFrom();
+            }
+        }
+
+        List<BackupDto> backupDtos = backups.stream().map(backupMapper::toDto).toList();
+
+        CursorPageResponseBackupDto response = CursorPageResponseBackupDto.builder()
+            .content(backupDtos)
+            .nextCursor(nextCursor)
+            .hasNext(hasNext)
+            .nextIdAfter(nextIdAfter)
+            .totalElements(totalElements)
+            .build();
+        return response;
     }
 
     private List<Backup> getRequestedBackups(
@@ -159,11 +172,12 @@ public class BackupServiceImpl implements BackupService {
             .selectFrom(qBackup)
             .where(where)
             .orderBy(getOrderSpecifier(sortField, orderBy, qBackup))
-            .limit(size)
+            .limit(size+1)
             .fetch();
 
         return backups;
     }
+
 
     private OrderSpecifier<?> getOrderSpecifier(String sortField, Order orderBy, QBackup backup) {
         return switch (sortField) {
@@ -268,7 +282,7 @@ public class BackupServiceImpl implements BackupService {
                 .employeeNumber(employee.getEmployeeNumber())
                 .name(employee.getName())
                 .email(employee.getEmail())
-                .departmentId(employee.getDepartment() != null ? employee.getDepartment().getId() : null)
+                .department(employee.getDepartment() != null ? employee.getDepartment() : null)
                 .position(employee.getPosition())
                 .hireDate(employee.getHireDate())
                 .status(employee.getStatus())

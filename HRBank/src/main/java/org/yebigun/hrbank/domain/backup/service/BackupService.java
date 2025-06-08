@@ -15,5 +15,6 @@ import java.time.Instant;
 public interface BackupService {
     BackupDto createBackup(HttpServletRequest request);
 
-    CursorPageResponseBackupDto findAsACursor(String worker, String status, Instant startedAtFrom, Instant startedAtTo, Long idAfter, Instant cursor, int size, String sortField, String sortDirection);
+    CursorPageResponseBackupDto findAsACursor(
+        String worker, String status, Instant startedAtFrom, Instant startedAtTo, Long idAfter, Instant cursor, int size, String sortField, String sortDirection);
 }

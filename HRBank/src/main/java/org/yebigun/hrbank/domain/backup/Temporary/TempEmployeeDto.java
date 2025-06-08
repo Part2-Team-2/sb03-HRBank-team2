@@ -3,6 +3,7 @@ package org.yebigun.hrbank.domain.backup.Temporary;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.yebigun.hrbank.domain.department.entity.Department;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 
 import java.time.LocalDate;
@@ -21,7 +22,7 @@ public class TempEmployeeDto {
     private String employeeNumber;
     private String name;
     private String email;
-    private Long departmentId;
+    private Department department;
     private String position;
     private LocalDate hireDate;
     private EmployeeStatus status;

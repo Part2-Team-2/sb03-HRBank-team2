@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -93,9 +94,39 @@ public class BackupController {
         }
 
         BackupDto backup = backupService.createBackup(request);
+        for (int i = 0; i < 40; i++) {
+            backupService.createBackup(request);
+        }
         return ResponseEntity.status(200).body(backup);
     }
 
+    @Operation(summary = "데이터 백업 생성")
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(
+                mediaType = "*/*",
+                array = @ArraySchema(schema = @Schema(implementation = CursorPageResponseBackupDto.class))
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "잘못된 요청 또는 지원하지 않는 정렬 필드",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "서버 오류",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
     @GetMapping
     public ResponseEntity<?> findAll(
         @RequestParam(required = false) String worker,
@@ -104,17 +135,17 @@ public class BackupController {
         @RequestParam(required = false) Instant startedAtTo,
         @RequestParam(required = false) Long idAfter,
         @RequestParam(required = false) Instant cursor,
-        @RequestParam int size,
-        @RequestParam String sortField,
-        @RequestParam String sortDirection
+        @RequestParam(required = false, defaultValue = "10") int size,
+        @RequestParam(required = false, defaultValue = "startedAt") String sortField,
+        @RequestParam(required = false, defaultValue = "DESC") String sortDirection
     ) {
 
         CursorPageResponseBackupDto asACursor = backupService.findAsACursor(worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);
+
         return ResponseEntity.ok().body(asACursor);
     }
 
 
-    @Transactional
     public void dummyEmployees(int n) {
         dummyDepartments(); // 부서 중복 insert 방지
         List<Department> departments = departmentRepository.findAll();
@@ -135,7 +166,6 @@ public class BackupController {
 
             employeeRepository.save(employee);
         }
-
         System.out.println("직원 " + n + "명 저장 완료");
     }
     private void dummyDepartments() {
@@ -157,9 +187,4 @@ public class BackupController {
             departmentRepository.save(department);
         }
     }
-
-
-
-
-
 }
