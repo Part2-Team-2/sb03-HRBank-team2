@@ -17,6 +17,7 @@ import org.yebigun.hrbank.domain.backup.entity.BackupStatus;
 import org.yebigun.hrbank.domain.backup.entity.QBackup;
 import org.yebigun.hrbank.domain.backup.mapper.BackupMapper;
 import org.yebigun.hrbank.domain.backup.repository.BackupRepository;
+import org.yebigun.hrbank.domain.backup.repository.BackupRepositoryCustom;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.storage.BackupBinaryContentStorage;
 import org.yebigun.hrbank.domain.binaryContent.storage.BinaryContentStorage;
@@ -43,14 +44,12 @@ public class BackupServiceImpl implements BackupService {
     private static final String ENDED_AT = "endedAt";
     private static final String STATUS = "status";
 
-
-
     private final BackupRepository backupRepository;
     private final BackupMapper backupMapper;
-    //    private final BinaryContentStorage binaryContentStorage;
     private final BackupBinaryContentStorage binaryContentStorage;
     private final EmployeeRepository employeeRepository;
-    private final JPAQueryFactory queryFactory;
+    private final BackupRepositoryCustom backupRepositoryCustom;
+
 
 
 
@@ -62,13 +61,12 @@ public class BackupServiceImpl implements BackupService {
             .employeeIp(getIp(request));
 
         // 변경 감지 : 가장 최근 완료된 배치 작업 시간 이후 직원 데이터가 변경된 경우에 데이터 백업이 필요한 것으로 간주합니다.
-        Optional<Instant> created = employeeRepository.findTopByOrderByCreatedAtDesc().map(employee -> employee.getCreatedAt());
-        Optional<Instant> updated = employeeRepository.findTopByOrderByUpdatedAtDesc().map(employee -> employee.getUpdatedAt());
-        Optional<Instant> latestBackup = backupRepository.findTopByOrderByCreatedAtDesc().map(backup -> backup.getCreatedAt());
+        Optional<Instant> lastCreated = employeeRepository.findTopByOrderByCreatedAtDesc().map(employee -> employee.getCreatedAt());
+        Optional<Instant> lastUpdated = employeeRepository.findTopByOrderByUpdatedAtDesc().map(employee -> employee.getUpdatedAt());
+        Optional<Instant> lastBackedUp = backupRepository.findTopByOrderByCreatedAtDesc().map(backup -> backup.getCreatedAt());
 
-
-        if (created.isPresent() && updated.isPresent() && latestBackup.isPresent()) {
-            if (!updated.get().isAfter(latestBackup.get()) && !created.get().isAfter(latestBackup.get())) {
+        if (lastCreated.isPresent() && lastUpdated.isPresent() && lastBackedUp.isPresent()) {
+            if (!lastUpdated.get().isAfter(lastBackedUp.get()) && !lastCreated.get().isAfter(lastBackedUp.get())) {
                 log.warn("변경사항 없음");
                 return processSkippedBackup(backupBuilder);
             }
@@ -88,35 +86,28 @@ public class BackupServiceImpl implements BackupService {
     @Transactional(readOnly = true)
     @Override
     public CursorPageResponseBackupDto findAsACursor(
-        String worker
-        , String status
-        , Instant startedAtFrom
-        , Instant startedAtTo
-        , Long idAfter // 백업 id index 231
-        , Instant cursor // Instant 마지막 요소의 날짜
-        , int size // 30
-        , String sortField // "startedAt", "endedAt", "status"
-        , String sortDirection // DESC, ASC
-    ) {
-        long totalElements = backupRepository.count();
-        List<Backup> backups = getRequestedBackups(
-            worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);
+        String worker, String status, Instant startedAtFrom, Instant startedAtTo, Long idAfter, Instant cursor, int size, String sortField, String sortDirection) {
 
+        long totalElements = backupRepository.count();
+        List<Backup> backups = backupRepositoryCustom.findAllByRequest(worker, status, startedAtFrom, startedAtTo, cursor, size, sortField, sortDirection);
+//            getRequestedBackups(
+//            worker, status, startedAtFrom, startedAtTo, cursor, size, sortField, sortDirection);
 
         boolean hasNext = backups.size() > size;
         Instant nextCursor = null;
         long nextIdAfter = 0;
 
-        if(hasNext) {
+        // 커서
+        if (hasNext) {
             backups = backups.subList(0, size);
             Backup lastBackup = backups.get(backups.size() - 1);
             nextIdAfter = lastBackup.getId();
 
-            switch (sortField){
-                case "createdAt" -> nextCursor = lastBackup.getStartedAtFrom();
-                case "updatedAt" -> nextCursor = lastBackup.getStartedAtTo();
-                case "status" -> nextCursor = null;
-                default -> nextCursor = lastBackup.getStartedAtFrom();
+            switch (sortField) {
+                case STARTED_AT -> nextCursor = lastBackup.getStartedAtFrom();
+                case ENDED_AT -> nextCursor = lastBackup.getStartedAtTo();
+                case STATUS -> nextCursor = null;
+                default -> throw new IllegalArgumentException("잘못된 요청 또는 정렬필드");
             }
         }
 
@@ -126,67 +117,68 @@ public class BackupServiceImpl implements BackupService {
             .content(backupDtos)
             .nextCursor(nextCursor)
             .hasNext(hasNext)
+            .size(size)
             .nextIdAfter(nextIdAfter)
             .totalElements(totalElements)
             .build();
         return response;
     }
 
-    private List<Backup> getRequestedBackups(
-        String worker, String status, Instant startedAtFrom, Instant startedAtTo, Long idAfter, Instant cursor, int size, String sortField, String sortDirection) {
+//    private List<Backup> getRequestedBackups(
+//        String worker, String status, Instant startedAtFrom, Instant startedAtTo, Instant cursor, int size, String sortField, String sortDirection) {
+//
+//        QBackup qBackup = QBackup.backup;
+//        BooleanBuilder where = new BooleanBuilder();
+//        if (worker != null) {
+//            where.and(qBackup.employeeIp.contains(worker));
+//        }
+//        if (status != null) {
+//            where.and(qBackup.backupStatus.eq(BackupStatus.valueOf(status)));
+//        }
+//        if (startedAtFrom != null) {
+//            where.and(qBackup.createdAt.goe(startedAtFrom));
+//        }
+//        if (startedAtTo != null) {
+//            where.and(qBackup.createdAt.loe(startedAtTo));
+//        }
+//
+//        Order orderBy = sortDirection.equalsIgnoreCase("ASC") ? Order.ASC : Order.DESC;
+//
+//        // started at 기준 오름차순
+//        if (cursor != null) {
+//            if (STARTED_AT.equals(sortField)) {
+//                where.and(orderBy == Order.ASC
+//                    ? qBackup.startedAtFrom.gt(cursor) : qBackup.startedAtFrom.lt(cursor));
+//            } else if (ENDED_AT.equals(sortField)) {
+//                where.and(orderBy == Order.ASC
+//                    ? qBackup.startedAtTo.gt(cursor) : qBackup.startedAtTo.lt(cursor));
+//            } else if (STATUS.equals(sortField)) {
+//                where.and(orderBy == Order.ASC
+//                    ? qBackup.backupStatus.gt(BackupStatus.valueOf(status)) :
+//                    qBackup.backupStatus.lt(BackupStatus.valueOf(status))
+//                );
+//            }
+//        }
+//
+//        List<Backup> backups = queryFactory
+//            .selectFrom(qBackup)
+//            .where(where)
+//            .orderBy(getOrderSpecifier(sortField, orderBy, qBackup))
+//            .limit(size + 1)
+//            .fetch();
+//
+//        return backups;
+//    }
 
-        QBackup qBackup = QBackup.backup;
-        BooleanBuilder where = new BooleanBuilder();
-        if(worker != null) {
-            where.and(qBackup.employeeIp.contains(worker));
-        }
-        if(status != null) {
-            where.and(qBackup.backupStatus.eq(BackupStatus.valueOf(status)));
-        }
-        if(startedAtFrom != null) {
-            where.and(qBackup.createdAt.goe(startedAtFrom));
-        }
-        if(startedAtTo != null) {
-            where.and(qBackup.createdAt.loe(startedAtTo));
-        }
 
-        Order orderBy = sortDirection.equalsIgnoreCase("ASC") ? Order.ASC : Order.DESC;
-
-        // started at 기준 오름차순
-        if (cursor != null) {
-            if (STARTED_AT.equals(sortField)) {
-                where.and(orderBy == Order.ASC
-                    ? qBackup.startedAtFrom.gt(cursor) : qBackup.startedAtFrom.lt(cursor));
-            } else if (ENDED_AT.equals(sortField)) {
-                where.and(orderBy == Order.ASC
-                    ? qBackup.startedAtTo.gt(cursor) : qBackup.startedAtTo.lt(cursor));
-            } else if (STATUS.equals(sortField)) {
-                where.and(orderBy == Order.ASC
-                    ? qBackup.backupStatus.gt(BackupStatus.valueOf(status)) :
-                    qBackup.backupStatus.lt(BackupStatus.valueOf(status))
-                );
-            }
-        }
-
-        List<Backup> backups = queryFactory
-            .selectFrom(qBackup)
-            .where(where)
-            .orderBy(getOrderSpecifier(sortField, orderBy, qBackup))
-            .limit(size+1)
-            .fetch();
-
-        return backups;
-    }
-
-
-    private OrderSpecifier<?> getOrderSpecifier(String sortField, Order orderBy, QBackup backup) {
-        return switch (sortField) {
-            case "startedAt" -> new OrderSpecifier<>(orderBy, backup.startedAtFrom);
-            case "endedAt" -> new OrderSpecifier<>(orderBy, backup.startedAtTo);
-            case "status" -> new OrderSpecifier<>(orderBy, backup.backupStatus);
-            default -> new OrderSpecifier<>(orderBy, backup.id);
-        };
-    }
+//    private OrderSpecifier<?> getOrderSpecifier(String sortField, Order orderBy, QBackup backup) {
+//        return switch (sortField) {
+//            case "startedAt" -> new OrderSpecifier<>(orderBy, backup.startedAtFrom);
+//            case "endedAt" -> new OrderSpecifier<>(orderBy, backup.startedAtTo);
+//            case "status" -> new OrderSpecifier<>(orderBy, backup.backupStatus);
+//            default -> new OrderSpecifier<>(orderBy, backup.id);
+//        };
+//    }
 
 
     private BackupDto processSkippedBackup(Backup.BackupBuilder backupBuilder) {

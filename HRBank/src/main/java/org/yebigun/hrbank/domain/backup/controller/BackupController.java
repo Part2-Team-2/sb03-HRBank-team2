@@ -21,6 +21,7 @@ import org.yebigun.hrbank.domain.backup.dto.CursorPageResponseBackupDto;
 import org.yebigun.hrbank.domain.backup.service.BackupService;
 import org.yebigun.hrbank.domain.department.entity.Department;
 import org.yebigun.hrbank.domain.department.repository.DepartmentRepository;
+import org.yebigun.hrbank.domain.employee.controller.EmployeeApi;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
@@ -43,7 +44,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("api/backups")
-public class BackupController {
+public class BackupController implements BackupApi {
     private final BackupService backupService;
 
     private final EmployeeRepository employeeRepository;
@@ -51,43 +52,9 @@ public class BackupController {
     boolean trigger = true;
 
 
-    @Operation(summary = "데이터 백업 생성")
-    @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "백업 생성 성공",
-            content = @Content(
-                mediaType = "*/*",
-                array = @ArraySchema(schema = @Schema(implementation = BackupDto.class))
-            )
-        ),
-        @ApiResponse(
-            responseCode = "400",
-            description = "잘못된 요청",
-            content = @Content(
-                mediaType = "*/*",
-                schema = @Schema(implementation = ErrorResponse.class)
-            )
-        ),
-        @ApiResponse(
-            responseCode = "409",
-            description = "이미 진행 중인 백업이 있음",
-            content = @Content(
-                mediaType = "*/*",
-                schema = @Schema(implementation = ErrorResponse.class)
-            )
-        ),
-        @ApiResponse(
-            responseCode = "500",
-            description = "서버 오류",
-            content = @Content(
-                mediaType = "*/*",
-                schema = @Schema(implementation = ErrorResponse.class)
-            )
-        )
-    })
     @PostMapping
     public ResponseEntity<BackupDto> createBackup(HttpServletRequest request) {
+
         if(trigger) {
             dummyEmployees(100);
             trigger = false;
@@ -100,33 +67,6 @@ public class BackupController {
         return ResponseEntity.status(200).body(backup);
     }
 
-    @Operation(summary = "데이터 백업 생성")
-    @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "조회 성공",
-            content = @Content(
-                mediaType = "*/*",
-                array = @ArraySchema(schema = @Schema(implementation = CursorPageResponseBackupDto.class))
-            )
-        ),
-        @ApiResponse(
-            responseCode = "400",
-            description = "잘못된 요청 또는 지원하지 않는 정렬 필드",
-            content = @Content(
-                mediaType = "*/*",
-                schema = @Schema(implementation = ErrorResponse.class)
-            )
-        ),
-        @ApiResponse(
-            responseCode = "500",
-            description = "서버 오류",
-            content = @Content(
-                mediaType = "*/*",
-                schema = @Schema(implementation = ErrorResponse.class)
-            )
-        )
-    })
     @GetMapping
     public ResponseEntity<?> findAll(
         @RequestParam(required = false) String worker,
@@ -140,7 +80,8 @@ public class BackupController {
         @RequestParam(required = false, defaultValue = "DESC") String sortDirection
     ) {
 
-        CursorPageResponseBackupDto asACursor = backupService.findAsACursor(worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);
+        CursorPageResponseBackupDto asACursor = backupService.findAsACursor(
+            worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);
 
         return ResponseEntity.ok().body(asACursor);
     }

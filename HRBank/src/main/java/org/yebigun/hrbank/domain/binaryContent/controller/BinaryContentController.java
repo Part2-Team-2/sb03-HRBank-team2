@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.yebigun.hrbank.domain.backup.controller.BackupApi;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
 import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
@@ -31,44 +32,14 @@ import org.yebigun.hrbank.global.dto.ErrorResponse;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/files")
-public class BinaryContentController {
+public class BinaryContentController implements BinaryContentApi {
     private final BinaryContentService binaryContentService;
     private final BackupBinaryContentStorage binaryContentStorage;
     private final BinaryContentRepository binaryContentRepository;
 
     // id = binary content id
-    @Operation(summary = "파일 다운로드")
-    @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
-            description = "다운로드 성공",
-            content = @Content(
-                mediaType = "*/*",
-                examples = @ExampleObject(
-                    value = "string"
-                )
-            )
-        ),
-        @ApiResponse(
-            responseCode = "404",
-            description = "파일을 찾을 수 없음",
-            content = @Content(
-                mediaType = "*/*",
-                schema = @Schema(implementation = ErrorResponse.class)
-            )
-        ),
-        @ApiResponse(
-            responseCode = "500",
-            description = "서버 오류",
-            content = @Content(
-                mediaType = "*/*",
-                schema = @Schema(implementation = ErrorResponse.class)
-            )
-        )
-    })
     @GetMapping("{id}/download")
     public ResponseEntity<?> downloadBinaryContent(@PathVariable Long id) {
-
         BinaryContentResponseDto binaryContentResponseDto = binaryContentService.find(id);
         return binaryContentStorage.download(binaryContentResponseDto);
     }

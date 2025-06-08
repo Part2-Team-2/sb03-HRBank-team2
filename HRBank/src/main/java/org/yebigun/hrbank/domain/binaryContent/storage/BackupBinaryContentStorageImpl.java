@@ -192,7 +192,7 @@ public class BackupBinaryContentStorageImpl implements BackupBinaryContentStorag
     }
 
     @Override
-    public BinaryContent putLog(long backupId, Exception exception) throws IOException {
+    public BinaryContent putLog(long backupId, Exception exception) {
 
         UUID tempFileName = UUID.randomUUID();
         Path tempPath = root.resolve(tempFileName + LOG_EXTENTION);
