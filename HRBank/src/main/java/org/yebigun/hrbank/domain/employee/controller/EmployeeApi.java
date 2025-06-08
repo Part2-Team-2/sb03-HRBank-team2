@@ -19,7 +19,7 @@ import org.yebigun.hrbank.global.dto.ErrorResponse;
 @Tag(name = "직원 관리", description = "직원 관리 API")
 public interface EmployeeApi {
 
-    @Operation(summary = "직원 분포 조회")
+    @Operation(summary = "직원 수 추이 조회")
     @ApiResponses({
         @ApiResponse(
             responseCode = "200",
