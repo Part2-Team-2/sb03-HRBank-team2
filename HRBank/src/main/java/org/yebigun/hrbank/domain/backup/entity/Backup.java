@@ -24,21 +24,25 @@ import java.time.Instant;
 public class Backup extends BaseUpdatableEntity {
 
     @Column(name = "started_at_from", nullable = false)
-    Instant startedAtFrom;
+    private Instant startedAtFrom;
 
     @Column(name = "started_at_to", nullable = false)
-    Instant startedAtTo;
+    private Instant startedAtTo;
 
     @Column(name = "employee_ip", nullable = false)
-    String employeeIp;
+    private String employeeIp;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "backup_status", nullable = false)
-    BackupStatus backupStatus;
+    private BackupStatus backupStatus;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "binary_content_id")
-    BinaryContent binaryContent;
+    private BinaryContent binaryContent;
 
+    public void addLogFile(BinaryContent binaryContent) {
+        if(this.binaryContent == null && binaryContent != null) {
+            this.binaryContent = binaryContent;
+        }
+    }
 }
-

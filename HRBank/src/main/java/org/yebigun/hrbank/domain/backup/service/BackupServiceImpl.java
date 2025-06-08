@@ -3,7 +3,9 @@ package org.yebigun.hrbank.domain.backup.service;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
 import org.yebigun.hrbank.domain.backup.entity.Backup;
@@ -26,7 +28,7 @@ import java.util.List;
  * Author       : dounguk
  * Date         : 2025. 6. 6.
  */
-
+@Log4j2
 @Transactional
 @RequiredArgsConstructor
 @Service
@@ -37,11 +39,7 @@ public class BackupServiceImpl implements BackupService {
     private final EmployeeRepository employeeRepository;
 
 
-    /**
-     * 잘못된 요청- 파라미터가 비어있는겅유
-     * 이미 진행 중인 백업이 있음
-     * 서버 오류
-     */
+    @Transactional
     @Override
     public BackupDto createBackup(HttpServletRequest request) {
         Backup.BackupBuilder backupBuilder = Backup.builder()
@@ -51,66 +49,104 @@ public class BackupServiceImpl implements BackupService {
         // 변경 감지 : 가장 최근 완료된 배치 작업 시간 이후 직원 데이터가 변경된 경우에 데이터 백업이 필요한 것으로 간주합니다.
         boolean change = true;
 
-        // 변경사항 없음
         if (!change) {
-            backupBuilder
-                .backupStatus(BackupStatus.SKIPPED)
-                .binaryContent(null)
-                .startedAtTo(Instant.now());
-
-            Backup backup = backupBuilder.build();
-            backupRepository.save(backup);
-            return backupMapper.toDto(backup);
+            log.warn("변경사항 없음");
+            return processSkippedBackup(backupBuilder);
         }
 
-        // 변경사항 있음
+        log.warn("변경사항 있음");
         try{
-            // 1. 모든 유저 정보 조회
-            List<Employee> employees = employeeRepository.findAll();
-            // 2. CSV 파일 생성
-            BinaryContent csvFile = binaryContentStorage.putCsv(employees);
-
-            backupBuilder
-                .backupStatus(BackupStatus.COMPLETED)
-                .startedAtTo(Instant.now())
-                .binaryContent(csvFile);
-            Backup backup = backupBuilder.build();
-            backupRepository.save(backup);
-            return backupMapper.toDto(backup);
-
+            log.warn("변경사항 저장");
+            return processCompletedBackup(backupBuilder);
         } catch (Exception e) {
-            // 1. 저장하던 CSV 파일 삭제
-            // 2. 실패 로그 생성(.log)
-            BinaryContent sampleLog = null;
-
-            backupBuilder
-                .backupStatus(BackupStatus.FAILED)
-                .startedAtTo(Instant.now())
-                .binaryContent(sampleLog);
-            Backup backup = backupBuilder.build();
-            backupRepository.save(backup);
-            return backupMapper.toDto(backup);
+            log.warn("변경사항 실패");
+            return processFailedBackup(backupBuilder,e);
         }
+
     }
 
 
+    private BackupDto processSkippedBackup(Backup.BackupBuilder backupBuilder) {
+        Backup backup = backupBuilder
+            .backupStatus(BackupStatus.SKIPPED)
+            .startedAtTo(Instant.now())
+            .binaryContent(null)
+            .build();
+
+        backupRepository.save(backup);
+        return backupMapper.toDto(backup);
+    }
+
+    private BackupDto processCompletedBackup(Backup.BackupBuilder backupBuilder) {
+        List<Employee> employees = employeeRepository.findAll();
+
+        BinaryContent csvFile = binaryContentStorage.putCsv(employees); // 내부에서 삭제
+        Backup backup = backupBuilder
+            .backupStatus(BackupStatus.COMPLETED)
+            .startedAtTo(Instant.now())
+            .binaryContent(csvFile)
+            .build();
+
+        backupRepository.save(backup);
+        return backupMapper.toDto(backup);
+    }
+
+    private BackupDto processFailedBackup(Backup.BackupBuilder backupBuilder, Exception exception) {
+        Backup backup = backupBuilder
+            .backupStatus(BackupStatus.FAILED)
+            .startedAtTo(Instant.now())
+            .binaryContent(null)
+            .build();
+        backup = backupRepository.save(backup);
+
+        try {
+            BinaryContent logFile = binaryContentStorage.putLog(backup.getId(), exception);
+            backup.addLogFile(logFile);
+            return backupMapper.toDto(backup);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private String getIp(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");
+        if(ip !=null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+            ip=ip.split(",")[0].trim();
+            if (isValidIp(ip)) {
+                return ip;
+            }
+        }
+
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("Proxy-Client-IP");
+            if (ip != null && isValidIp(ip)) return ip;
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("WL-Proxy-Client-IP");
+            if(ip != null && isValidIp(ip)) return ip;
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("HTTP_CLIENT_IP");
+            if(ip != null && isValidIp(ip)) return ip;
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+            if(ip != null && isValidIp(ip)) return ip;
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getRemoteAddr();
         }
         return ip;
+    }
+
+    private boolean isValidIp(String ip) {
+        if (ip == null || ip.trim().isEmpty()) return false;
+
+        try{
+            java.net.InetAddress.getByName(ip);
+            return true;
+        } catch (Exception e){
+            return false;
+        }
     }
 }

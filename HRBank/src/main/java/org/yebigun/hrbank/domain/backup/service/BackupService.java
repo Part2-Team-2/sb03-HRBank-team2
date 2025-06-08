@@ -12,5 +12,4 @@ import org.yebigun.hrbank.domain.backup.dto.BackupDto;
  */
 public interface BackupService {
     BackupDto createBackup(HttpServletRequest request);
-
 }
