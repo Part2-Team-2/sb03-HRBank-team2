@@ -1,6 +1,8 @@
 package org.yebigun.hrbank.domain.department.service;
 
 import java.time.LocalDate;
+import java.util.Base64;
+import java.util.List;
 import java.util.NoSuchElementException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,7 @@ import org.yebigun.hrbank.domain.department.entity.Department;
 import org.yebigun.hrbank.domain.department.mapper.DepartmentMapper;
 import org.yebigun.hrbank.domain.department.repository.DepartmentRepository;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
+import org.yebigun.hrbank.global.dto.CursorPageResponse;
 
 @RequiredArgsConstructor
 @Service
@@ -86,5 +89,44 @@ public class DepartmentServiceImpl implements DepartmentService {
         }
 
         departmentRepository.delete(department);
+    }
+
+    @Transactional(readOnly = true)
+    public CursorPageResponse<DepartmentDto> findDepartments(
+        String cursor,
+        int size,
+        String sortField,
+        String sortDirection,
+        String nameOrDescription
+    ) {
+        Long cursorId = decodeCursor(cursor);
+
+        List<Department> departments = departmentRepository.findNextDepartments(
+            cursorId, size, sortField, sortDirection, nameOrDescription
+        );
+
+        boolean hasNext = departments.size() > size;
+        List<Department> currentPage = hasNext ? departments.subList(0, size) : departments;
+
+        String nextCursor = hasNext ? encodeCursor(currentPage.get(size - 1).getId()) : null;
+
+        List<DepartmentDto> dtoList = currentPage.stream()
+            .map(departmentMapper::toDto)
+            .toList();
+
+        return new CursorPageResponse<>(dtoList, nextCursor, size, hasNext);
+    }
+
+    private String encodeCursor(Long id) {
+        return Base64.getEncoder().encodeToString(String.valueOf(id).getBytes());
+    }
+
+    private Long decodeCursor(String cursor) {
+        if (cursor == null || cursor.isBlank()) return null;
+        try {
+            return Long.parseLong(new String(Base64.getDecoder().decode(cursor)));
+        } catch (Exception e) {
+            throw new IllegalArgumentException("잘못된 커서 형식입니다.");
+        }
     }
 }
