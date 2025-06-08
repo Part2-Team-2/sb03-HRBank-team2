@@ -12,19 +12,16 @@ public class DepartmentMapper {
 
     private final EmployeeRepository employeeRepository;
 
-    public DepartmentDto toDto(Department department){
+    public DepartmentDto toDto(Department department, int employeeCount) {
+
         return DepartmentDto.builder()
             .id(department.getId())
             .name(department.getName())
             .description(department.getDescription())
             .establishedDate(department.getEstablishedDate())
-            .employeeCount(calculateEmployeeCount(department))
+            .employeeCount(employeeCount)
             .build();
     }
 
-    private int calculateEmployeeCount(Department department) {
-
-        return employeeRepository.countByDepartmentId(department.getId());
-    }
 }
 

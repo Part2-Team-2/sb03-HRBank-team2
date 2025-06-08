@@ -43,7 +43,7 @@ public class DepartmentServiceImpl implements DepartmentService {
 
         Department createdDepartment = departmentRepository.save(department);
 
-        return departmentMapper.toDto(createdDepartment);
+        return departmentMapper.toDto(createdDepartment, calculateEmployeeCount(createdDepartment));
     }
 
     @Override
@@ -52,7 +52,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         Department department = departmentRepository.findById(departmentId)
             .orElseThrow(() -> new NoSuchElementException("존재하지 않는 부서입니다"));
 
-        return departmentMapper.toDto(department);
+        return departmentMapper.toDto(department, calculateEmployeeCount(department));
     }
 
     @Override
@@ -74,7 +74,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         department.setDescription(description);
         department.setEstablishedDate(establishedDate);
 
-        return departmentMapper.toDto(department);
+        return departmentMapper.toDto(department, calculateEmployeeCount(department));
     }
 
     @Override
@@ -131,7 +131,8 @@ public class DepartmentServiceImpl implements DepartmentService {
         long totalElements = departmentRepository.countAllByCondition(nameOrDescription);
 
         List<DepartmentDto> dtoList = currentPage.stream()
-            .map(departmentMapper::toDto)
+            .map(department -> departmentMapper.toDto(department,
+                calculateEmployeeCount(department)))
             .toList();
 
         return new CursorPageResponse<>
@@ -149,5 +150,11 @@ public class DepartmentServiceImpl implements DepartmentService {
         } catch (Exception e) {
             throw new IllegalArgumentException("잘못된 커서 형식입니다.");
         }
+    }
+
+
+    private int calculateEmployeeCount(Department department) {
+
+        return employeeRepository.countByDepartmentId(department.getId());
     }
 }
