@@ -69,14 +69,15 @@ public class DepartmentController implements DepartmentApi {
 
     @GetMapping
     public ResponseEntity<CursorPageResponse<DepartmentDto>> findDepartments(
+        @RequestParam(required = false) String nameOrDescription,
+        @RequestParam(required = false) Long idAfter,
         @RequestParam(required = false) String cursor,
-        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "10") Integer size,
         @RequestParam(defaultValue = "establishedDate") String sortField,
-        @RequestParam(defaultValue = "asc") String sortDirection,
-        @RequestParam(required = false) String nameOrDescription
+        @RequestParam(defaultValue = "asc") String sortDirection
     ) {
         CursorPageResponse<DepartmentDto> response = departmentService.findDepartments(
-            cursor, size, sortField, sortDirection, nameOrDescription
+            nameOrDescription, idAfter, cursor, size, sortField, sortDirection
         );
         return ResponseEntity.ok(response);
     }

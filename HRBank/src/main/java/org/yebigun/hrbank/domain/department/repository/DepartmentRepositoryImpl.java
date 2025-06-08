@@ -16,44 +16,65 @@ public class DepartmentRepositoryImpl implements DepartmentRepositoryCustom{
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<Department> findNextDepartments(Long cursorId, int size, String sortField,
-        String sortDirection, String nameOrDescription) {
+    public List<Department> findNextDepartments(
+        Long cursor,
+        int size,
+        String sortField,
+        String sortDirection,
+        String nameOrDescription
+    ) {
         QDepartment department = QDepartment.department;
 
-        BooleanExpression cursorPredicate = (cursorId != null) ? department.id.gt(cursorId) : null;
-
-        BooleanExpression keywordPredicate = null;
+        BooleanExpression condition = null;
         if (nameOrDescription != null && !nameOrDescription.isBlank()) {
-            keywordPredicate = department.name.containsIgnoreCase(nameOrDescription)
+            condition = department.name.containsIgnoreCase(nameOrDescription)
                 .or(department.description.containsIgnoreCase(nameOrDescription));
         }
 
-        BooleanExpression whereClause = combine(cursorPredicate, keywordPredicate);
-        OrderSpecifier<?> orderSpecifier = getOrderSpecifier(department, sortField, sortDirection);
+        BooleanExpression cursorCondition = null;
+        if (cursor != null) {
+            cursorCondition = switch (sortField) {
+                case "name" -> department.name.gt(department.name.coalesce("").substring(0)).and(department.id.gt(cursor));
+                case "establishedDate" -> department.establishedDate.gt(department.establishedDate).or(department.id.gt(cursor));
+                default -> department.id.gt(cursor);
+            };
+        }
 
-        return queryFactory.selectFrom(department)
-            .where(whereClause)
+        OrderSpecifier<?> orderSpecifier = ("desc".equalsIgnoreCase(sortDirection))
+            ? switch (sortField) {
+            case "name" -> department.name.desc();
+            case "establishedDate" -> department.establishedDate.desc();
+            default -> department.id.desc();
+        }
+            : switch (sortField) {
+                case "name" -> department.name.asc();
+                case "establishedDate" -> department.establishedDate.asc();
+                default -> department.id.asc();
+            };
+
+        return queryFactory
+            .selectFrom(department)
+            .where(condition, cursorCondition)
             .orderBy(orderSpecifier)
             .limit(size + 1)
             .fetch();
     }
 
-    private BooleanExpression combine(BooleanExpression... expressions) {
-        BooleanExpression result = null;
-        for (BooleanExpression expr : expressions) {
-            if (expr != null) {
-                result = (result == null) ? expr : result.and(expr);
-            }
-        }
-        return result;
-    }
+    @Override
+    public long countAllByCondition(String nameOrDescription) {
+        QDepartment department = QDepartment.department;
 
-    private OrderSpecifier<?> getOrderSpecifier(QDepartment d, String field, String dir) {
-        boolean desc = "desc".equalsIgnoreCase(dir);
-        return switch (field) {
-            case "name" -> desc ? d.name.desc() : d.name.asc();
-            case "establishedDate" -> desc ? d.establishedDate.desc() : d.establishedDate.asc();
-            default -> d.id.asc(); // 기본 정렬
-        };
+        BooleanExpression predicate = null;
+        if (nameOrDescription != null && !nameOrDescription.isBlank()) {
+            predicate = department.name.containsIgnoreCase(nameOrDescription)
+                .or(department.description.containsIgnoreCase(nameOrDescription));
+        }
+
+        Long count = queryFactory.select(department.count())
+            .from(department)
+            .where(predicate)
+            .fetchOne();
+
+        return count != null ? count : 0L;
     }
 }

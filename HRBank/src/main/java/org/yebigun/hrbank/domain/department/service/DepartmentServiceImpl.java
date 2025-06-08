@@ -91,38 +91,59 @@ public class DepartmentServiceImpl implements DepartmentService {
         departmentRepository.delete(department);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public CursorPageResponse<DepartmentDto> findDepartments(
+        String nameOrDescription,
+        Long idAfter,
         String cursor,
-        int size,
+        Integer size,
         String sortField,
-        String sortDirection,
-        String nameOrDescription
+        String sortDirection
     ) {
-        Long cursorId = decodeCursor(cursor);
+        int pageSize = size != null ? size : 10;
+
+        Long effectiveCursor = null;
+        if (idAfter != null) {
+            effectiveCursor = idAfter;
+        } else if (cursor != null && !cursor.isBlank()) {
+            try {
+                effectiveCursor = decodeCursor(cursor);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("유효하지 않은 cursor 값입니다.");
+            }
+        }
 
         List<Department> departments = departmentRepository.findNextDepartments(
-            cursorId, size, sortField, sortDirection, nameOrDescription
+            effectiveCursor, pageSize, sortField, sortDirection, nameOrDescription
         );
 
-        boolean hasNext = departments.size() > size;
-        List<Department> currentPage = hasNext ? departments.subList(0, size) : departments;
+        boolean hasNext = departments.size() > pageSize;
 
-        String nextCursor = hasNext ? encodeCursor(currentPage.get(size - 1).getId()) : null;
+        List<Department> currentPage = hasNext ? departments.subList(0, pageSize) : departments;
+
+        Long nextIdAfter = hasNext ? currentPage.get(pageSize - 1).getId() : null;
+
+        String nextCursor = (nextIdAfter != null)
+            ? Base64.getEncoder().encodeToString(String.valueOf(nextIdAfter).getBytes())
+            : null;
+
+        long totalElements = departmentRepository.countAllByCondition(nameOrDescription);
 
         List<DepartmentDto> dtoList = currentPage.stream()
             .map(departmentMapper::toDto)
             .toList();
 
-        return new CursorPageResponse<>(dtoList, nextCursor, size, hasNext);
-    }
-
-    private String encodeCursor(Long id) {
-        return Base64.getEncoder().encodeToString(String.valueOf(id).getBytes());
+        return new CursorPageResponse<>
+            (
+                dtoList, nextIdAfter, nextCursor, pageSize, totalElements, hasNext
+            );
     }
 
     private Long decodeCursor(String cursor) {
-        if (cursor == null || cursor.isBlank()) return null;
+        if (cursor == null || cursor.isBlank()) {
+            return null;
+        }
         try {
             return Long.parseLong(new String(Base64.getDecoder().decode(cursor)));
         } catch (Exception e) {

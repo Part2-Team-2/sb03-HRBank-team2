@@ -16,11 +16,12 @@ public interface DepartmentService {
     void delete(Long departmentId);
 
     CursorPageResponse<DepartmentDto> findDepartments(
+        String nameOrDescription,
+        Long idAfter,
         String cursor,
-        int size,
+        Integer size,
         String sortField,
-        String sortDirection,
-        String nameOrDescription
+        String sortDirection
     );
 
 }

@@ -10,6 +10,9 @@ public interface DepartmentRepositoryCustom {
         int size,
         String sortField,
         String sortDirection,
-        String nameOrDescription);
+        String nameOrDescription
+    );
+
+    long countAllByCondition(String nameOrDescription);
 
 }
