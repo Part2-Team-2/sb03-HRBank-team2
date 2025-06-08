@@ -122,10 +122,7 @@ public class ChangeLogServiceImpl implements ChangeLogService {
     @Override
     public CursorPageResponseChangeLogDto getChangeLogs(ChangeLogSearchCondition condition) {
 
-        // 기본값 보정 및 유효성 보장
-        ChangeLogSearchCondition validCondition = searchCondition(condition);
-
-        return changeLogRepository.searchChangeLogs(validCondition);
+        return changeLogRepository.searchChangeLogs(condition);
     }
 
     // 변경 상세 내용 필드 구성
@@ -136,31 +133,4 @@ public class ChangeLogServiceImpl implements ChangeLogService {
             .after(afterValue)
             .build();
     }
-
-    // 검색 조건 보정
-    private ChangeLogSearchCondition searchCondition(ChangeLogSearchCondition condition) {
-
-        // 유효 목록
-        List<String> validSortFields = List.of("ipAddress", "at");
-        List<String> validDirections = List.of("asc", "desc");
-
-        // 기본값 보정
-        int size = (condition.size() > 0) ?  condition.size() : 10;
-        String sortField = validSortFields.contains(condition.sortDirection()) ? condition.sortField() : "at";
-        String sortDirection = validDirections.contains(condition.sortDirection()) ? condition.sortDirection() : "desc";
-
-        return new ChangeLogSearchCondition(
-            condition.employeeNumber(),
-            condition.type(),
-            condition.memo(),
-            condition.ipAddress(),
-            condition.atFrom(),
-            condition.atTo(),
-            condition.idAfter(),
-            size,
-            sortField,
-            sortDirection
-        );
-    }
-
 }
