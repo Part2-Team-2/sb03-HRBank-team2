@@ -11,7 +11,7 @@ import org.yebigun.hrbank.domain.department.entity.QDepartment;
 
 @Repository
 @RequiredArgsConstructor
-public class DepartmentRepositoryImpl implements DepartmentRepositoryCustom{
+public class DepartmentRepositoryImpl implements DepartmentRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
 
@@ -33,11 +33,44 @@ public class DepartmentRepositoryImpl implements DepartmentRepositoryCustom{
 
         BooleanExpression cursorCondition = null;
         if (cursor != null) {
-            cursorCondition = switch (sortField) {
-                case "name" -> department.name.gt(department.name.coalesce("").substring(0)).and(department.id.gt(cursor));
-                case "establishedDate" -> department.establishedDate.gt(department.establishedDate).or(department.id.gt(cursor));
-                default -> department.id.gt(cursor);
-            };
+            Department cursorDepartment = queryFactory  // queryFactory를 사용하여 순환 의존성 문제 해결
+                .selectFrom(department)
+                .where(department.id.eq(cursor))
+                .fetchOne();
+
+            if (cursorDepartment != null) {
+                cursorCondition = switch (sortField) {
+                    case "name" -> {
+                        if ("asc".equals(sortDirection)) {
+                            yield department.name.gt(cursorDepartment.getName())
+                                .or(department.name.eq(cursorDepartment.getName())
+                                    .and(department.id.gt(cursor)));
+                        } else {
+                            yield department.name.lt(cursorDepartment.getName())
+                                .or(department.name.eq(cursorDepartment.getName())
+                                    .and(department.id.lt(cursor)));
+                        }
+                    }
+                    case "establishedDate" -> {
+                        if ("asc".equals(sortDirection)) {
+                            yield department.establishedDate.gt(
+                                    cursorDepartment.getEstablishedDate())
+                                .or(department.establishedDate.eq(
+                                        cursorDepartment.getEstablishedDate())
+                                    .and(department.id.gt(cursor)));
+                        } else {
+                            yield department.establishedDate.lt(
+                                    cursorDepartment.getEstablishedDate())
+                                .or(department.establishedDate.eq(
+                                        cursorDepartment.getEstablishedDate())
+                                    .and(department.id.lt(cursor)));
+                        }
+                    }
+                    default -> "desc".equalsIgnoreCase(sortDirection)
+                        ? department.id.lt(cursor)
+                        : department.id.gt(cursor);
+                };
+            }
         }
 
         OrderSpecifier<?> orderSpecifier = ("desc".equalsIgnoreCase(sortDirection))

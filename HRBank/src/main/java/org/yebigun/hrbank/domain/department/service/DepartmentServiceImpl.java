@@ -107,11 +107,7 @@ public class DepartmentServiceImpl implements DepartmentService {
         if (idAfter != null) {
             effectiveCursor = idAfter;
         } else if (cursor != null && !cursor.isBlank()) {
-            try {
-                effectiveCursor = decodeCursor(cursor);
-            } catch (Exception e) {
-                throw new IllegalArgumentException("유효하지 않은 cursor 값입니다.");
-            }
+            effectiveCursor = decodeCursor(cursor);
         }
 
         List<Department> departments = departmentRepository.findNextDepartments(
@@ -122,7 +118,8 @@ public class DepartmentServiceImpl implements DepartmentService {
 
         List<Department> currentPage = hasNext ? departments.subList(0, pageSize) : departments;
 
-        Long nextIdAfter = hasNext ? currentPage.get(pageSize - 1).getId() : null;
+        Long nextIdAfter =
+            hasNext && !currentPage.isEmpty() ? currentPage.get(pageSize - 1).getId() : null;
 
         String nextCursor = (nextIdAfter != null)
             ? Base64.getEncoder().encodeToString(String.valueOf(nextIdAfter).getBytes())
