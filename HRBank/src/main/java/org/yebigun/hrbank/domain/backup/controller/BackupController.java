@@ -69,7 +69,7 @@ public class BackupController implements BackupApi {
     }
 
     @GetMapping
-    public ResponseEntity<?> findAll(
+    public ResponseEntity<CursorPageResponseBackupDto> findAll(
         @RequestParam(required = false) String worker,
         @RequestParam(required = false) String status,
         @RequestParam(required = false) Instant startedAtFrom,

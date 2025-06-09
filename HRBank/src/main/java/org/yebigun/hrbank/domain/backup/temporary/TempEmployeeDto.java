@@ -1,4 +1,4 @@
-package org.yebigun.hrbank.domain.backup.Temporary;
+package org.yebigun.hrbank.domain.backup.temporary;
 
 import lombok.Builder;
 import lombok.Getter;

@@ -50,6 +50,6 @@ public interface BinaryContentApi {
     })
     @GetMapping("{id}/download")
     ResponseEntity<?> downloadBinaryContent(
-        @Parameter(description = "파일 ID", required = true) Long id
+        @Parameter(description = "파일 ID", required = true) @PathVariable Long id
     );
 }

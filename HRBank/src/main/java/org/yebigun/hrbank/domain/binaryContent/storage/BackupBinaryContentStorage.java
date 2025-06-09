@@ -1,6 +1,6 @@
 package org.yebigun.hrbank.domain.binaryContent.storage;
 
-import org.yebigun.hrbank.domain.backup.Temporary.TempEmployeeDto;
+import org.yebigun.hrbank.domain.backup.temporary.TempEmployeeDto;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 
 import java.io.IOException;

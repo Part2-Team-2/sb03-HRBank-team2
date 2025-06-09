@@ -4,14 +4,9 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.yebigun.hrbank.domain.backup.Temporary.TempEmployeeDto;
-import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
+import org.yebigun.hrbank.domain.backup.temporary.TempEmployeeDto;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepository;
 
@@ -20,7 +15,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -70,8 +67,15 @@ public class BackupBinaryContentStorageImpl implements BackupBinaryContentStorag
         }
     }
 
+    /**
+     * 바이너리 콘텐츠의 InputStream을 반환합니다.
+     * @param binaryContentId 바이너리 콘텐츠 ID
+     * @return InputStream - 호출자가 반드시 close() 해야 함
+     * @throws NoSuchElementException 파일을 찾을 수 없는 경우
+     */
+    @Transactional(readOnly = true)
     @Override
-    public InputStream get(Long binaryContentId) {
+    public InputStream get(Long binaryContentId){
         BinaryContent binaryContent = binaryContentRepository.findById(binaryContentId)
             .orElseThrow(() -> new NoSuchElementException("파일을 찾을 수 없습니다."));
 
@@ -104,7 +108,7 @@ public class BackupBinaryContentStorageImpl implements BackupBinaryContentStorag
             bw.write(COLUMNS);
             bw.newLine();
 
-            if(employees != null || !employees.isEmpty()) {
+            if(employees != null && !employees.isEmpty()) {
 //                for (Employee employee : employees) {
                 for (TempEmployeeDto employee : employees) {
                     log.warn("내부 반복");
@@ -114,7 +118,7 @@ public class BackupBinaryContentStorageImpl implements BackupBinaryContentStorag
                             employee.getEmployeeNumber(),
                             employee.getName(),
                             employee.getEmail(),
-                            employee.getDepartment().getName(),
+                            employee.getDepartment() != null ? employee.getDepartment().getName() : "",
                             employee.getPosition(),
                             employee.getHireDate(),
                             employee.getStatus()
@@ -128,6 +132,7 @@ public class BackupBinaryContentStorageImpl implements BackupBinaryContentStorag
                         } catch (IOException deleteException) {
                             e.addSuppressed(deleteException);
                         }
+                        throw new RuntimeException("파일 삭제중 오류 발생");
                     }
                 }
             }
@@ -163,14 +168,13 @@ public class BackupBinaryContentStorageImpl implements BackupBinaryContentStorag
         try { // log 파일 저장
             Files.write(filePath, logMessage.getBytes(StandardCharsets.UTF_8));
         } catch (IOException deleteException) {
-            exception.addSuppressed(deleteException);
             throw new RuntimeException("로그 저장에 실패했습니다", deleteException);
         }
 
         long fileSize = getSize(filePath);
 
         BinaryContent binaryContent = BinaryContent.builder()
-            .fileName(backupId + LOG_EXTENTION)
+            .fileName(fileName + LOG_EXTENTION)
             .size(fileSize)
             .contentType(LOG_CONTENT_TYPE)
             .build();

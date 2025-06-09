@@ -55,12 +55,14 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
             } else if (ENDED_AT.equals(sortField)) {
                 where.and(orderBy == Order.ASC
                     ? qBackup.startedAtTo.gt(cursor) : qBackup.startedAtTo.lt(cursor));
-            } else if (STATUS.equals(sortField)) {
-                where.and(orderBy == Order.ASC
-                    ? qBackup.backupStatus.gt(BackupStatus.valueOf(status)) :
-                    qBackup.backupStatus.lt(BackupStatus.valueOf(status))
-                );
-            } else {
+            }
+//            else if (STATUS.equals(sortField)) {
+//                where.and(orderBy == Order.ASC
+//                    ? qBackup.backupStatus.gt(BackupStatus.valueOf(status)) :
+//                    qBackup.backupStatus.lt(BackupStatus.valueOf(status))
+//                );
+//            }
+            else {
                 throw new IllegalArgumentException("잘못된 요청 또는 정렬필드");
             }
         }

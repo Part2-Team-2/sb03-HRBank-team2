@@ -64,7 +64,7 @@ public interface BackupApi {
     })
     ResponseEntity<BackupDto> createBackup(HttpServletRequest request);
 
-    @Operation(summary = "데이터 백업 생성")
+    @Operation(summary = "데이터 백업 목록 조회")
     @ApiResponses({
         @ApiResponse(
             responseCode = "200",
@@ -92,7 +92,7 @@ public interface BackupApi {
         )
     })
     @GetMapping
-    ResponseEntity<?> findAll(
+    ResponseEntity<CursorPageResponseBackupDto> findAll(
         @Parameter(description = "작업자") String worker,
         @Parameter(description = "상태 (IN_PROGRESS, COMPLETED, FAILED)") String status,
         @Parameter(description = "시작 시간(부터)") Instant startedAtFrom,

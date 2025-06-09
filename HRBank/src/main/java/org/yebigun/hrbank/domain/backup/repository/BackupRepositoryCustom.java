@@ -13,5 +13,6 @@ import java.util.List;
  */
 
 public interface BackupRepositoryCustom {
-    List<Backup> findAllByRequest(String worker, String status, Instant startedAtFrom, Instant startedAtTo, Instant cursor, int size, String sortField, String sortDirection);
+    List<Backup> findAllByRequest(
+        String worker, String status, Instant startedAtFrom, Instant startedAtTo, Instant cursor, int size, String sortField, String sortDirection);
 }

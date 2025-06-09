@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.yebigun.hrbank.domain.backup.Temporary.TempEmployeeDto;
+import org.yebigun.hrbank.domain.backup.temporary.TempEmployeeDto;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
 import org.yebigun.hrbank.domain.backup.dto.CursorPageResponseBackupDto;
 import org.yebigun.hrbank.domain.backup.entity.Backup;
@@ -52,15 +52,9 @@ public class BackupServiceImpl implements BackupService {
             .employeeIp(getIp(request));
 
         // 변경 감지 : 가장 최근 완료된 배치 작업 시간 이후 직원 데이터가 변경된 경우에 데이터 백업이 필요한 것으로 간주합니다.
-        Optional<Instant> lastCreated = employeeRepository.findTopByOrderByCreatedAtDesc().map(employee -> employee.getCreatedAt());
-        Optional<Instant> lastUpdated = employeeRepository.findTopByOrderByUpdatedAtDesc().map(employee -> employee.getUpdatedAt());
-        Optional<Instant> lastBackedUp = backupRepository.findTopByOrderByCreatedAtDesc().map(backup -> backup.getCreatedAt());
-
-        if (lastCreated.isPresent() && lastUpdated.isPresent() && lastBackedUp.isPresent()) {
-            if (!lastUpdated.get().isAfter(lastBackedUp.get()) && !lastCreated.get().isAfter(lastBackedUp.get())) {
-                log.warn("변경사항 없음");
-                return processSkippedBackup(backupBuilder);
-            }
+        if (!hasUpdate()) {
+            log.warn("변경사항 없음");
+            return processSkippedBackup(backupBuilder);
         }
 
         log.warn("변경사항 있음");
@@ -81,7 +75,8 @@ public class BackupServiceImpl implements BackupService {
         isValidStatus(status);
 
         // content
-        List<Backup> backups = backupRepositoryCustom.findAllByRequest(worker, status, startedAtFrom, startedAtTo, cursor, size, sortField, sortDirection);
+        List<Backup> backups = backupRepositoryCustom.findAllByRequest(
+            worker, status, startedAtFrom, startedAtTo, cursor, size, sortField, sortDirection);
 
         // cursor
         long totalElements = backupRepository.count();
@@ -115,7 +110,23 @@ public class BackupServiceImpl implements BackupService {
         return response;
     }
 
+    private boolean hasUpdate() {
+        Optional<Instant> lastCreated = employeeRepository.findTopByOrderByCreatedAtDesc().map(employee -> employee.getCreatedAt());
+        Optional<Instant> lastUpdated = employeeRepository.findTopByOrderByUpdatedAtDesc().map(employee -> employee.getUpdatedAt());
+        Optional<Instant> lastBackedUp = backupRepository.findTopByOrderByCreatedAtDesc().map(backup -> backup.getCreatedAt());
+
+        if (lastCreated.isPresent() && lastUpdated.isPresent() && lastBackedUp.isPresent()) {
+            if (!lastUpdated.get().isAfter(lastBackedUp.get()) && !lastCreated.get().isAfter(lastBackedUp.get())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     private void isValidStatus(String status) {
+        if (status==null) {
+            return;
+        }
         try{
             BackupStatus.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException e) {
@@ -173,7 +184,6 @@ public class BackupServiceImpl implements BackupService {
                 return ip;
             }
         }
-
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("Proxy-Client-IP");
             if (ip != null && isValidIp(ip)) return ip;
@@ -223,7 +233,6 @@ public class BackupServiceImpl implements BackupService {
                 .build();
             dtoList.add(employeeDto);
         }
-
         return dtoList;
     }
 
