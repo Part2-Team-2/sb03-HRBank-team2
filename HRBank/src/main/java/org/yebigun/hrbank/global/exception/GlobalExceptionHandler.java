@@ -12,8 +12,7 @@ import org.yebigun.hrbank.global.dto.ErrorResponse;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private ResponseEntity<ErrorResponse> sendErrorResponse(HttpStatus status, String message,
-                                                            String details) {
+    private ResponseEntity<ErrorResponse> sendErrorResponse(HttpStatus status, String message, String details) {
         return ResponseEntity.status(status).body(ErrorResponse.of(status, message, details));
     }
 
