@@ -55,8 +55,8 @@ public class BackupServiceImpl implements BackupService {
     public BackupDto createBackup(HttpServletRequest request) {
 
         Backup.BackupBuilder backupBuilder = Backup.builder()
-//            .startedAtFrom(Instant.now())
-            .startedAtFrom(testOnlyFrom())
+            .startedAtFrom(Instant.now())
+//            .startedAtFrom(testOnlyFrom())
             .employeeIp(getIp(request));
 
         // 변경 감지 : 가장 최근 완료된 배치 작업 시간 이후 직원 데이터가 변경된 경우에 데이터 백업이 필요한 것으로 간주합니다.

@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.backup.aop
- * FileName     : BackupLoggingAspect
+ * FileName     : BackupSynchronizedExecutionAspect
  * Author       : dounguk
  * Date         : 2025. 6. 9.
  */
@@ -25,7 +25,7 @@ public class BackupSynchronizedExecutionAspect {
 
     @Around("@annotation(SynchronizedExecution)")
     public Object synchronizedException(ProceedingJoinPoint joinPoint) throws Throwable {
-        String key = joinPoint.getSignature().getName();
+        String key = joinPoint.getSignature().getDeclaringTypeName() + "." + joinPoint.getSignature().getName();
         ReentrantLock lock = lockMap.computeIfAbsent(key, k -> new ReentrantLock());
 
         boolean locked = lock.tryLock();
