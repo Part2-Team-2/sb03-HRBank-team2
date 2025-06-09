@@ -9,7 +9,9 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.yebigun.hrbank.domain.department.entity.QDepartment;
@@ -27,40 +29,20 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
     public List<EmployeeTrendDto> findEmployeeTrend(LocalDate from, LocalDate to, String unit) {
         QEmployee e = QEmployee.employee;
 
-        List<LocalDate> activeDates = queryFactory
-            .select(e.createdAt)
-            .from(e)
-            .where(e.status.eq(EmployeeStatus.ACTIVE))
-            .fetch()
-            .stream()
-            .map(instant -> instant.atZone(ZoneId.of("Asia/Seoul")).toLocalDate())
-            .sorted()
-            .toList();
+        // 1. 필요한 날짜들만 조회 (전체 데이터 대신 날짜별 카운트)
+        Map<LocalDate, Long> dateCounts = new HashMap<>();
 
-        int index = 0;
+        // 각 날짜별로 해당 날짜까지의 누적 카운트를 DB에서 직접 계산
         LocalDate current = from;
-        long prevCnt = 0L;
-
-        List<EmployeeTrendDto> trend = new ArrayList<>();
-
         while (!current.isAfter(to)) {
+            Long count = queryFactory
+                .select(e.count())
+                .from(e)
+                .where(e.status.eq(EmployeeStatus.ACTIVE)
+                    .and(e.createdAt.loe(current.atStartOfDay(ZoneId.systemDefault()).toInstant())))
+                .fetchOne();
 
-            while (index < activeDates.size() && !activeDates.get(index).isAfter(current)) {
-                index++;
-            }
-
-            long cnt = index;
-
-            long change = cnt - prevCnt;
-            double changeRate = 0.0;
-
-            if (prevCnt != 0) {
-                changeRate = ((cnt - prevCnt) * 100.0) / prevCnt;
-            }
-
-            prevCnt = cnt;
-
-            trend.add(new EmployeeTrendDto(current, cnt, change, changeRate));
+            dateCounts.put(current, count != null ? count : 0L);
 
             current = switch (unit) {
                 case "day" -> current.plusDays(1);
@@ -68,13 +50,33 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
                 case "month" -> current.plusMonths(1);
                 case "quarter" -> current.plusMonths(3);
                 case "year" -> current.plusYears(1);
-                default -> current;
+                default -> current.plusMonths(1);
             };
+        }
+
+        // 2. 변화량 계산
+        List<EmployeeTrendDto> trend = new ArrayList<>();
+        long prevCount = 0L;
+
+        for (Map.Entry<LocalDate, Long> entry : dateCounts.entrySet().stream()
+            .sorted(Map.Entry.comparingByKey()).toList()) {
+
+            LocalDate date = entry.getKey();
+            long count = entry.getValue();
+            long change = count - prevCount;
+            double changeRate = 0.0;
+
+            if (prevCount != 0) {
+                changeRate = (count - prevCount) * 100.0 / prevCount;
+                changeRate = Math.round(changeRate * 10.0) / 10.0;
+            }
+
+            trend.add(new EmployeeTrendDto(date, count, change, changeRate));
+            prevCount = count;
         }
 
         return trend;
     }
-
 
     @Override
     public List<EmployeeDistributionDto> findEmployeeByStatusGroupByDepartmentOrPosition(
