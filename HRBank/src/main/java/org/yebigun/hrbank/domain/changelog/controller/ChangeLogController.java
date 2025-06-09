@@ -1,5 +1,6 @@
 package org.yebigun.hrbank.domain.changelog.controller;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
@@ -59,10 +60,16 @@ public class ChangeLogController {
     private Long resolveCursor(String cursor, Long idAfter) {
         if (cursor != null) {
             try {
-                return Long.parseLong(new String(Base64.getDecoder().decode((cursor))));
+                String decodedCursor = new String(Base64.getDecoder().decode(cursor), StandardCharsets.UTF_8);
+                Long cursorId = Long.parseLong(decodedCursor);
+
+                if (cursorId <= 0) {
+                    throw new IllegalArgumentException("커서 ID가 유효하지 않습니다");
+                }
+                return cursorId;
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException("Invalid cursor provided: " + cursor);
-            }
+                throw new IllegalArgumentException("Invalid cursor format");
+            } 
         }
         return idAfter;
     }
