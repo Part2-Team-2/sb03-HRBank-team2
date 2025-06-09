@@ -103,7 +103,7 @@ public class BackupBinaryContentStorageImpl implements BackupBinaryContentStorag
         Path filePath = root.resolve(fileName + CSV_EXTENTION);
 
         log.warn("파일 생성 시작");
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath.toFile()))) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath.toFile(),StandardCharsets.UTF_8))) {
             log.warn("파일 생성");
             bw.write(COLUMNS);
             bw.newLine();

@@ -24,7 +24,6 @@ import java.util.List;
 public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
     private static final String STARTED_AT = "startedAt";
     private static final String ENDED_AT = "endedAt";
-    private static final String STATUS = "status";
 
     private final JPAQueryFactory queryFactory;
 
@@ -37,13 +36,13 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
             where.and(qBackup.employeeIp.contains(worker));
         }
         if (status != null) {
-            where.and(qBackup.backupStatus.eq(BackupStatus.valueOf(status)));
+            where.and(qBackup.backupStatus.eq(BackupStatus.valueOf(status.toUpperCase())));
         }
         if (startedAtFrom != null) {
-            where.and(qBackup.createdAt.goe(startedAtFrom));
+            where.and(qBackup.startedAtFrom.goe(startedAtFrom));
         }
         if (startedAtTo != null) {
-            where.and(qBackup.createdAt.loe(startedAtTo));
+            where.and(qBackup.startedAtTo.loe(startedAtTo));
         }
 
         Order orderBy = sortDirection.equalsIgnoreCase("ASC") ? Order.ASC : Order.DESC;
@@ -56,12 +55,6 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
                 where.and(orderBy == Order.ASC
                     ? qBackup.startedAtTo.gt(cursor) : qBackup.startedAtTo.lt(cursor));
             }
-//            else if (STATUS.equals(sortField)) {
-//                where.and(orderBy == Order.ASC
-//                    ? qBackup.backupStatus.gt(BackupStatus.valueOf(status)) :
-//                    qBackup.backupStatus.lt(BackupStatus.valueOf(status))
-//                );
-//            }
             else {
                 throw new IllegalArgumentException("잘못된 요청 또는 정렬필드");
             }
@@ -80,7 +73,6 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
         return switch (sortField) {
             case STARTED_AT -> new OrderSpecifier<>(orderBy, backup.startedAtFrom);
             case ENDED_AT -> new OrderSpecifier<>(orderBy, backup.startedAtTo);
-            case STATUS -> new OrderSpecifier<>(orderBy, backup.backupStatus);
             default -> throw new IllegalArgumentException("잘못된 요청 또는 정렬필드");
         };
     }
