@@ -42,7 +42,6 @@ import java.util.stream.Collectors;
  * Author       : dounguk
  * Date         : 2025. 6. 6.
  */
-@Tag(name = "데이터 백업 관리", description = "데이터 백업 관리 API")
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("api/backups")
