@@ -5,9 +5,11 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.PathBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.List;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogDto;
@@ -75,7 +77,7 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
         // 다음 페이지용 커서 정보 (다음 페이지 요청 시 사용)
         Long nextId = hasNext ? pageContent.get(pageContent.size() - 1).getId() : null;
         String nextCursor = (nextId != null)
-            ? Base64.getEncoder().encodeToString(String.valueOf(nextId).getBytes())
+            ? Base64.getEncoder().encodeToString(String.valueOf(nextId).getBytes(StandardCharsets.UTF_8))
             : null;
 
         // DTO 매핑
@@ -98,10 +100,13 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
         PathBuilder<ChangeLog> path = new PathBuilder<>(ChangeLog.class, "changeLog");
         Order order = "asc".equalsIgnoreCase(sortDirection) ? Order.ASC : Order.DESC;
 
+        Set<String> allowedSortFields = Set.of("ipAddress", "at");
+        if (sortField == null || !allowedSortFields.contains(sortField)) {
+            sortField = "at";
+        }
+
         if ("ipAddress".equals(sortField)) {
             return new OrderSpecifier<>(order, path.getString("ipAddress"));
-        } else if ("at".equals(sortField)) {
-            return new OrderSpecifier<>(order, path.getComparable("at", Instant.class));
         } else {
             return new OrderSpecifier<>(order, path.getComparable("at", Instant.class));
         }
