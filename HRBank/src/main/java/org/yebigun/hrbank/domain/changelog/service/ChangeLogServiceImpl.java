@@ -15,6 +15,7 @@ import org.yebigun.hrbank.domain.changelog.dto.response.CursorPageResponseChange
 import org.yebigun.hrbank.domain.changelog.entity.ChangeLog;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeLogDiff;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeType;
+import org.yebigun.hrbank.domain.changelog.mapper.ChangeLogMapper;
 import org.yebigun.hrbank.domain.changelog.repository.ChangeLogDiffRepository;
 import org.yebigun.hrbank.domain.changelog.repository.ChangeLogRepository;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
@@ -26,6 +27,7 @@ public class ChangeLogServiceImpl implements ChangeLogService {
 
     private final ChangeLogRepository changeLogRepository;
     private final ChangeLogDiffRepository changeLogDiffRepository;
+    private final ChangeLogMapper changeLogMapper;
 
     @Override
     public void recordChangeLog(Employee beforeValue, Employee afterValue, String memo, String ipAddress, ChangeType changeType) {
@@ -122,7 +124,6 @@ public class ChangeLogServiceImpl implements ChangeLogService {
 
     @Override
     public CursorPageResponseChangeLogDto getChangeLogs(ChangeLogSearchCondition condition) {
-
         return changeLogRepository.searchChangeLogs(condition);
     }
 

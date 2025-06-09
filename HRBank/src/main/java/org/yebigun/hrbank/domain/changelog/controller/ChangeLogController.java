@@ -1,6 +1,7 @@
 package org.yebigun.hrbank.domain.changelog.controller;
 
 import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -39,8 +40,11 @@ public class ChangeLogController {
         @RequestParam(defaultValue = "at") String sortField,
         @RequestParam(defaultValue = "desc") String sortDirection
     ) {
+        // 커서 디코딩, idAfter 변환
+        Long effectiveIdAfter = resolveCursor(cursor, idAfter);
+
         ChangeLogSearchCondition condition = new ChangeLogSearchCondition(
-            employeeNumber, type, memo, ipAddress, atFrom, atTo, idAfter, size, sortField, sortDirection
+            employeeNumber, type, memo, ipAddress, atFrom, atTo, effectiveIdAfter, size, sortField, sortDirection
         );
         return ResponseEntity.ok(changeLogService.getChangeLogs(condition));
     }
@@ -49,6 +53,18 @@ public class ChangeLogController {
     @GetMapping("/{id}/diffs")
     public ResponseEntity<List<DiffDto>> getChangeLogDiffs(@PathVariable Long id) {
         return ResponseEntity.ok(changeLogService.getChangeLogDiffs(id));
+    }
+
+    // 커서 문자열 id 변환 메서드
+    private Long resolveCursor(String cursor, Long idAfter) {
+        if (cursor != null) {
+            try {
+                return Long.parseLong(new String(Base64.getDecoder().decode((cursor))));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid cursor provided: " + cursor);
+            }
+        }
+        return idAfter;
     }
 
 }
