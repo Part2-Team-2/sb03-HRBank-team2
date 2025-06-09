@@ -92,6 +92,7 @@ public class BackupServiceImpl implements BackupService {
     public CursorPageResponseBackupDto findAsACursor(
         String worker, BackupStatus status, Instant startedAtFrom, Instant startedAtTo, Long idAfter, Instant cursor, int size, String sortField, Order sortDirection) {
 
+
         // content
         List<Backup> backups = backupRepositoryCustom.findAllByRequest(
             worker, status, startedAtFrom, startedAtTo, cursor, size, sortField, sortDirection);
@@ -129,17 +130,21 @@ public class BackupServiceImpl implements BackupService {
     }
 
     private boolean hasUpdate() {
-        Optional<Instant> lastCreated = employeeRepository.findTopByOrderByCreatedAtDesc().map(employee -> employee.getCreatedAt());
-        Optional<Instant> lastUpdated = employeeRepository.findTopByOrderByUpdatedAtDesc().map(employee -> employee.getUpdatedAt());
-        Optional<Instant> lastBackedUp = backupRepository.findTopByOrderByCreatedAtDesc().map(backup -> backup.getCreatedAt());
+        Optional<Instant> lastCreated = employeeRepository.findTopByOrderByCreatedAtDesc().map(Employee::getCreatedAt);
+        Optional<Instant> lastUpdated = employeeRepository.findTopByOrderByUpdatedAtDesc().map(Employee::getUpdatedAt);
+        Optional<Instant> lastBackedUp = backupRepository.findTopByOrderByCreatedAtDesc().map(Backup::getCreatedAt);
 
-        if (lastCreated.isPresent() && lastUpdated.isPresent() && lastBackedUp.isPresent()) {
-            if (!lastUpdated.get().isAfter(lastBackedUp.get()) && !lastCreated.get().isAfter(lastBackedUp.get())) {
-                return false;
-            }
+        if (lastBackedUp.isEmpty()) {
+            return true;
         }
-        return true;
+        Instant backupTime = lastBackedUp.get();
+
+        boolean createdAfterBackup = lastCreated.map(created -> created.isAfter(backupTime)).orElse(false);
+        boolean updatedAfterBackup = lastUpdated.map(updated -> updated.isAfter(backupTime)).orElse(false);
+
+        return createdAfterBackup || updatedAfterBackup;
     }
+
 
     private BackupDto processSkippedBackup(Backup.BackupBuilder backupBuilder) {
         Backup backup = backupBuilder
