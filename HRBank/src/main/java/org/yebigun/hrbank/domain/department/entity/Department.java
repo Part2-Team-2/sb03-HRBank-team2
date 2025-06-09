@@ -13,7 +13,6 @@ import org.yebigun.hrbank.global.base.BaseUpdatableEntity;
 
 @Builder
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -28,4 +27,10 @@ public class Department extends BaseUpdatableEntity {
 
     @Column(name = "established_date", nullable = false)
     private LocalDate establishedDate;
+
+    public void update(String newName, String newDescription, LocalDate newEstablishedDate) {
+        this.name = newName;
+        this.description = newDescription;
+        this.establishedDate = newEstablishedDate;
+    }
 }
