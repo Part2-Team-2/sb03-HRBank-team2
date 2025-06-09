@@ -80,10 +80,6 @@ public class ChangeLogServiceImpl implements ChangeLogService {
                     diffs.add(createDiff("입사일", beforeValue.getHireDate().toString(), afterValue.getHireDate().toString()));
                 }
 
-                if (!Objects.equals(beforeValue.getEmployeeNumber(), afterValue.getEmployeeNumber())) {
-                    diffs.add(createDiff("사번", beforeValue.getEmployeeNumber(), afterValue.getEmployeeNumber()));
-                }
-
                 if (!Objects.equals(beforeValue.getStatus(), afterValue.getStatus())) {
                     diffs.add(createDiff("상태", beforeValue.getStatus().name(), afterValue.getStatus().name()));
                 }
@@ -96,7 +92,6 @@ public class ChangeLogServiceImpl implements ChangeLogService {
                 diffs.add(createDiff("부서명", beforeValue.getDepartment() != null ? beforeValue.getDepartment().getName() : null, null));
                 diffs.add(createDiff("직함", beforeValue.getPosition(), null));
                 diffs.add(createDiff("입사일", beforeValue.getHireDate().toString(), null));
-                diffs.add(createDiff("사번", beforeValue.getEmployeeNumber(), null));
                 diffs.add(createDiff("상태", beforeValue.getStatus() != null ? beforeValue.getStatus().name() : null, null));
                 break;
         }
