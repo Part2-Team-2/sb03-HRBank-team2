@@ -32,6 +32,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 /**
@@ -55,15 +56,15 @@ public class BackupController implements BackupApi {
     @PostMapping
     public ResponseEntity<BackupDto> createBackup(HttpServletRequest request) {
 
-        if(trigger) {
-            dummyEmployees(100);
-            trigger = false;
-        }
+//        if(trigger) {
+//            dummyEmployees(100);
+//            trigger = false;
+//        }
 
         BackupDto backup = backupService.createBackup(request);
-        for (int i = 0; i < 40; i++) {
-            backupService.createBackup(request);
-        }
+//        for (int i = 0; i < 40; i++) {
+//            backupService.createBackup(request);
+//        }
         return ResponseEntity.status(200).body(backup);
     }
 
@@ -79,13 +80,11 @@ public class BackupController implements BackupApi {
         @RequestParam(required = false, defaultValue = "startedAt") String sortField,
         @RequestParam(required = false, defaultValue = "DESC") String sortDirection
     ) {
-
         CursorPageResponseBackupDto asACursor = backupService.findAsACursor(
             worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);
 
         return ResponseEntity.ok().body(asACursor);
     }
-
 
     public void dummyEmployees(int n) {
         dummyDepartments(); // 부서 중복 insert 방지

@@ -1,9 +1,5 @@
 package org.yebigun.hrbank.domain.backup.service;
 
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Order;
-import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -14,13 +10,11 @@ import org.yebigun.hrbank.domain.backup.dto.BackupDto;
 import org.yebigun.hrbank.domain.backup.dto.CursorPageResponseBackupDto;
 import org.yebigun.hrbank.domain.backup.entity.Backup;
 import org.yebigun.hrbank.domain.backup.entity.BackupStatus;
-import org.yebigun.hrbank.domain.backup.entity.QBackup;
 import org.yebigun.hrbank.domain.backup.mapper.BackupMapper;
 import org.yebigun.hrbank.domain.backup.repository.BackupRepository;
 import org.yebigun.hrbank.domain.backup.repository.BackupRepositoryCustom;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.storage.BackupBinaryContentStorage;
-import org.yebigun.hrbank.domain.binaryContent.storage.BinaryContentStorage;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 
@@ -51,9 +45,6 @@ public class BackupServiceImpl implements BackupService {
     private final BackupRepositoryCustom backupRepositoryCustom;
 
 
-
-
-
     @Override
     public BackupDto createBackup(HttpServletRequest request) {
         Backup.BackupBuilder backupBuilder = Backup.builder()
@@ -80,7 +71,6 @@ public class BackupServiceImpl implements BackupService {
             log.warn("변경사항 실패");
             return processFailedBackup(backupBuilder,e);
         }
-
     }
 
     @Transactional(readOnly = true)
@@ -88,16 +78,17 @@ public class BackupServiceImpl implements BackupService {
     public CursorPageResponseBackupDto findAsACursor(
         String worker, String status, Instant startedAtFrom, Instant startedAtTo, Long idAfter, Instant cursor, int size, String sortField, String sortDirection) {
 
-        long totalElements = backupRepository.count();
-        List<Backup> backups = backupRepositoryCustom.findAllByRequest(worker, status, startedAtFrom, startedAtTo, cursor, size, sortField, sortDirection);
-//            getRequestedBackups(
-//            worker, status, startedAtFrom, startedAtTo, cursor, size, sortField, sortDirection);
+        isValidStatus(status);
 
-        boolean hasNext = backups.size() > size;
+        // content
+        List<Backup> backups = backupRepositoryCustom.findAllByRequest(worker, status, startedAtFrom, startedAtTo, cursor, size, sortField, sortDirection);
+
+        // cursor
+        long totalElements = backupRepository.count();
         Instant nextCursor = null;
         long nextIdAfter = 0;
+        boolean hasNext = backups.size() > size;
 
-        // 커서
         if (hasNext) {
             backups = backups.subList(0, size);
             Backup lastBackup = backups.get(backups.size() - 1);
@@ -106,11 +97,11 @@ public class BackupServiceImpl implements BackupService {
             switch (sortField) {
                 case STARTED_AT -> nextCursor = lastBackup.getStartedAtFrom();
                 case ENDED_AT -> nextCursor = lastBackup.getStartedAtTo();
-                case STATUS -> nextCursor = null;
                 default -> throw new IllegalArgumentException("잘못된 요청 또는 정렬필드");
             }
         }
 
+        // mapping
         List<BackupDto> backupDtos = backups.stream().map(backupMapper::toDto).toList();
 
         CursorPageResponseBackupDto response = CursorPageResponseBackupDto.builder()
@@ -124,62 +115,13 @@ public class BackupServiceImpl implements BackupService {
         return response;
     }
 
-//    private List<Backup> getRequestedBackups(
-//        String worker, String status, Instant startedAtFrom, Instant startedAtTo, Instant cursor, int size, String sortField, String sortDirection) {
-//
-//        QBackup qBackup = QBackup.backup;
-//        BooleanBuilder where = new BooleanBuilder();
-//        if (worker != null) {
-//            where.and(qBackup.employeeIp.contains(worker));
-//        }
-//        if (status != null) {
-//            where.and(qBackup.backupStatus.eq(BackupStatus.valueOf(status)));
-//        }
-//        if (startedAtFrom != null) {
-//            where.and(qBackup.createdAt.goe(startedAtFrom));
-//        }
-//        if (startedAtTo != null) {
-//            where.and(qBackup.createdAt.loe(startedAtTo));
-//        }
-//
-//        Order orderBy = sortDirection.equalsIgnoreCase("ASC") ? Order.ASC : Order.DESC;
-//
-//        // started at 기준 오름차순
-//        if (cursor != null) {
-//            if (STARTED_AT.equals(sortField)) {
-//                where.and(orderBy == Order.ASC
-//                    ? qBackup.startedAtFrom.gt(cursor) : qBackup.startedAtFrom.lt(cursor));
-//            } else if (ENDED_AT.equals(sortField)) {
-//                where.and(orderBy == Order.ASC
-//                    ? qBackup.startedAtTo.gt(cursor) : qBackup.startedAtTo.lt(cursor));
-//            } else if (STATUS.equals(sortField)) {
-//                where.and(orderBy == Order.ASC
-//                    ? qBackup.backupStatus.gt(BackupStatus.valueOf(status)) :
-//                    qBackup.backupStatus.lt(BackupStatus.valueOf(status))
-//                );
-//            }
-//        }
-//
-//        List<Backup> backups = queryFactory
-//            .selectFrom(qBackup)
-//            .where(where)
-//            .orderBy(getOrderSpecifier(sortField, orderBy, qBackup))
-//            .limit(size + 1)
-//            .fetch();
-//
-//        return backups;
-//    }
-
-
-//    private OrderSpecifier<?> getOrderSpecifier(String sortField, Order orderBy, QBackup backup) {
-//        return switch (sortField) {
-//            case "startedAt" -> new OrderSpecifier<>(orderBy, backup.startedAtFrom);
-//            case "endedAt" -> new OrderSpecifier<>(orderBy, backup.startedAtTo);
-//            case "status" -> new OrderSpecifier<>(orderBy, backup.backupStatus);
-//            default -> new OrderSpecifier<>(orderBy, backup.id);
-//        };
-//    }
-
+    private void isValidStatus(String status) {
+        try{
+            BackupStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("잘못된 요청 또는 정렬필드");
+        }
+    }
 
     private BackupDto processSkippedBackup(Backup.BackupBuilder backupBuilder) {
         Backup backup = backupBuilder
@@ -195,7 +137,7 @@ public class BackupServiceImpl implements BackupService {
     private BackupDto processCompletedBackup(Backup.BackupBuilder backupBuilder) {
         List<TempEmployeeDto> employees = toDto(employeeRepository.findAll());
 
-        BinaryContent csvFile = binaryContentStorage.putCsv(employees); // 내부에서 삭제
+        BinaryContent csvFile = binaryContentStorage.writeCsv(employees); // 내부에서 삭제
         Backup backup = backupBuilder
             .backupStatus(BackupStatus.COMPLETED)
             .startedAtTo(Instant.now())
@@ -215,7 +157,7 @@ public class BackupServiceImpl implements BackupService {
         backup = backupRepository.save(backup);
 
         try {
-            BinaryContent logFile = binaryContentStorage.putLog(backup.getId(), exception);
+            BinaryContent logFile = binaryContentStorage.writeLog(backup.getId(), exception);
             backup.addLogFile(logFile);
             return backupMapper.toDto(backup);
         } catch (Exception e) {

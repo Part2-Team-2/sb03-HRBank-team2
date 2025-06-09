@@ -48,7 +48,6 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
 
         Order orderBy = sortDirection.equalsIgnoreCase("ASC") ? Order.ASC : Order.DESC;
 
-        // started at 기준 오름차순
         if (cursor != null) {
             if (STARTED_AT.equals(sortField)) {
                 where.and(orderBy == Order.ASC
@@ -61,6 +60,8 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
                     ? qBackup.backupStatus.gt(BackupStatus.valueOf(status)) :
                     qBackup.backupStatus.lt(BackupStatus.valueOf(status))
                 );
+            } else {
+                throw new IllegalArgumentException("잘못된 요청 또는 정렬필드");
             }
         }
 
@@ -70,7 +71,6 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
             .orderBy(getOrderSpecifier(sortField, orderBy, qBackup))
             .limit(size + 1)
             .fetch();
-
         return backups;
     }
 
@@ -79,7 +79,7 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
             case STARTED_AT -> new OrderSpecifier<>(orderBy, backup.startedAtFrom);
             case ENDED_AT -> new OrderSpecifier<>(orderBy, backup.startedAtTo);
             case STATUS -> new OrderSpecifier<>(orderBy, backup.backupStatus);
-            default -> new OrderSpecifier<>(orderBy, backup.id);
+            default -> throw new IllegalArgumentException("잘못된 요청 또는 정렬필드");
         };
     }
 }

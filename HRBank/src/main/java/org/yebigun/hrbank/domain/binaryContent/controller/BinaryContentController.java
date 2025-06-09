@@ -1,26 +1,17 @@
 package org.yebigun.hrbank.domain.binaryContent.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.yebigun.hrbank.domain.backup.controller.BackupApi;
-import org.yebigun.hrbank.domain.backup.dto.BackupDto;
 import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepository;
 import org.yebigun.hrbank.domain.binaryContent.service.BinaryContentService;
 import org.yebigun.hrbank.domain.binaryContent.storage.BackupBinaryContentStorage;
 import org.yebigun.hrbank.domain.binaryContent.storage.BinaryContentStorage;
-import org.yebigun.hrbank.global.dto.ErrorResponse;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.binaryContent.controller
@@ -34,7 +25,8 @@ import org.yebigun.hrbank.global.dto.ErrorResponse;
 @RequestMapping("api/files")
 public class BinaryContentController implements BinaryContentApi {
     private final BinaryContentService binaryContentService;
-    private final BackupBinaryContentStorage binaryContentStorage;
+    private final BinaryContentStorage binaryContentStorage;
+
     private final BinaryContentRepository binaryContentRepository;
 
     // id = binary content id
@@ -61,5 +53,4 @@ public class BinaryContentController implements BinaryContentApi {
             return ResponseEntity.internalServerError().body("파일 저장 실패: " + e.getMessage());
         }
     }
-
 }
