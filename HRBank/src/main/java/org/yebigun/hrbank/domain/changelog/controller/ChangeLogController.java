@@ -55,7 +55,7 @@ public class ChangeLogController {
 
     // 변경 상세 이력 조회
     @GetMapping("/{id}/diffs")
-    public ResponseEntity<List<DiffDto>> getChangeLogDiffs(@PathVariable Long id) {
+    public ResponseEntity<List<DiffDto>> getChangeLogDiffs(@PathVariable(name = "id") Long id) {
         return ResponseEntity.ok(changeLogService.getChangeLogDiffs(id));
     }
 
