@@ -28,7 +28,6 @@ public class BackupSynchronizedExecutionAspect {
         String key = joinPoint.getSignature().getName();
         ReentrantLock lock = lockMap.computeIfAbsent(key, k -> new ReentrantLock());
 
-
         boolean locked = lock.tryLock();
 
         if(!locked) {
