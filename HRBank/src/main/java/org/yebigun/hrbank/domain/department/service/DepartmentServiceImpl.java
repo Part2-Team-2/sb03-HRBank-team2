@@ -121,9 +121,7 @@ public class DepartmentServiceImpl implements DepartmentService {
             throw new IllegalArgumentException("이미 존재하는 부서 이름입니다.");
         }
 
-        department.setName(name);
-        department.setDescription(description);
-        department.setEstablishedDate(establishedDate);
+        department.update(name, description, establishedDate);
 
         return departmentMapper.toDto(department, calculateEmployeeCount(department));
     }
