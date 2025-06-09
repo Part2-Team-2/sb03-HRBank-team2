@@ -14,4 +14,5 @@ public interface EmployeeRepositoryCustom {
     Map<Long, Long> countByDepartmentIds(List<Long> departmentIds);
     List<Employee> findAllByRequest(String nameOrEmail, String employeeNumber, String departmentName, String position, LocalDate hireDateFrom, LocalDate hireDateTo, EmployeeStatus status, String cursor,
         int size, String sortField, String sortDirection);
+    Long countByRequest(String nameOrEmail, String employeeNumber, String departmentName, String position, LocalDate hireDateFrom, LocalDate hireDateTo, EmployeeStatus status);
 }
