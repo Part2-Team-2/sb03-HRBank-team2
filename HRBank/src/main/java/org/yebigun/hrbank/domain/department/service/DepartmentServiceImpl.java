@@ -187,7 +187,7 @@ public class DepartmentServiceImpl implements DepartmentService {
 
         Map<Long, Long> employeeCountMap = employeeRepository.countByDepartmentIds(departmentIds);
 
-        List<DepartmentDto> dtoList = departments.stream()
+        List<DepartmentDto> dtoList = currentPage.stream()
             .map(dept -> DepartmentDto.builder()
                 .id(dept.getId())
                 .name(dept.getName())
