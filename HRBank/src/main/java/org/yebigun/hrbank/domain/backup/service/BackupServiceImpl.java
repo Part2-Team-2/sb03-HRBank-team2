@@ -98,10 +98,10 @@ public class BackupServiceImpl implements BackupService {
             worker, status, startedAtFrom, startedAtTo, cursor, size, sortField, sortDirection);
 
         // cursor
-        long totalElements = backupRepository.count();
+        long totalElements = backups.size();
         Instant nextCursor = null;
         long nextIdAfter = 0;
-        boolean hasNext = backups.size() > size;
+        boolean hasNext = backups.size() == size+1;
 
         if (hasNext) {
             backups = backups.subList(0, size);
