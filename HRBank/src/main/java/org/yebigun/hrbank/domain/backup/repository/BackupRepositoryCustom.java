@@ -1,6 +1,8 @@
 package org.yebigun.hrbank.domain.backup.repository;
 
+import com.querydsl.core.types.Order;
 import org.yebigun.hrbank.domain.backup.entity.Backup;
+import org.yebigun.hrbank.domain.backup.entity.BackupStatus;
 
 import java.time.Instant;
 import java.util.List;
@@ -14,5 +16,5 @@ import java.util.List;
 
 public interface BackupRepositoryCustom {
     List<Backup> findAllByRequest(
-        String worker, String status, Instant startedAtFrom, Instant startedAtTo, Instant cursor, int size, String sortField, String sortDirection);
+        String worker, BackupStatus status, Instant startedAtFrom, Instant startedAtTo, Instant cursor, int size, String sortField, Order sortDirection);
 }

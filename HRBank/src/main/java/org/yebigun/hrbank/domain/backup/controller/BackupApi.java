@@ -1,5 +1,6 @@
 package org.yebigun.hrbank.domain.backup.controller;
 
+import com.querydsl.core.types.Order;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
 import org.yebigun.hrbank.domain.backup.dto.CursorPageResponseBackupDto;
+import org.yebigun.hrbank.domain.backup.entity.BackupStatus;
 import org.yebigun.hrbank.global.dto.ErrorResponse;
 
 import java.time.Instant;
@@ -64,6 +66,7 @@ public interface BackupApi {
     })
     ResponseEntity<BackupDto> createBackup(HttpServletRequest request);
 
+
     @Operation(summary = "데이터 백업 목록 조회")
     @ApiResponses({
         @ApiResponse(
@@ -91,18 +94,17 @@ public interface BackupApi {
             )
         )
     })
+
     @GetMapping
     ResponseEntity<CursorPageResponseBackupDto> findAll(
         @Parameter(description = "작업자") String worker,
-        @Parameter(description = "상태 (IN_PROGRESS, COMPLETED, FAILED)") String status,
+        @Parameter(description = "상태 (IN_PROGRESS, COMPLETED, FAILED)") BackupStatus status,
         @Parameter(description = "시작 시간(부터)") Instant startedAtFrom,
         @Parameter(description = "시작 시간(까지)") Instant startedAtTo,
         @Parameter(description = "이전 페이지 마지막 요소 ID") Long idAfter,
         @Parameter(description = "커서 (이전 페이지의 마지막 ID)") Instant cursor,
         @Parameter(description = "페이지 크기") int size,
         @Parameter(description = "정렬 필드 (startedAt, endedAt, status)") String sortField,
-        @Parameter(description = "정렬 방향 (ASC, DESC)") String sortDirection
+        @Parameter(description = "정렬 방향 (ASC, DESC)") Order sortDirection
     );
-
-
 }

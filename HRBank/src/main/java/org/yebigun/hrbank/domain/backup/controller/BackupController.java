@@ -1,6 +1,7 @@
 package org.yebigun.hrbank.domain.backup.controller;
 
 import com.mysema.commons.lang.Pair;
+import com.querydsl.core.types.Order;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -19,6 +20,7 @@ import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.bind.annotation.*;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
 import org.yebigun.hrbank.domain.backup.dto.CursorPageResponseBackupDto;
+import org.yebigun.hrbank.domain.backup.entity.BackupStatus;
 import org.yebigun.hrbank.domain.backup.service.BackupService;
 import org.yebigun.hrbank.domain.department.entity.Department;
 import org.yebigun.hrbank.domain.department.repository.DepartmentRepository;
@@ -55,7 +57,7 @@ public class BackupController implements BackupApi {
 
     @PostMapping
     public ResponseEntity<BackupDto> createBackup(HttpServletRequest request) {
-
+//
 //        if(trigger) {
 //            dummyEmployees(100);
 //            trigger = false;
@@ -101,14 +103,14 @@ public class BackupController implements BackupApi {
     @GetMapping
     public ResponseEntity<CursorPageResponseBackupDto> findAll(
         @RequestParam(required = false) String worker,
-        @RequestParam(required = false) String status,
+        @RequestParam(required = false) BackupStatus status,
         @RequestParam(required = false) Instant startedAtFrom,
         @RequestParam(required = false) Instant startedAtTo,
         @RequestParam(required = false) Long idAfter,
         @RequestParam(required = false) Instant cursor,
         @RequestParam(required = false, defaultValue = "10") int size,
         @RequestParam(required = false, defaultValue = "startedAt") String sortField,
-        @RequestParam(required = false, defaultValue = "DESC") String sortDirection
+        @RequestParam(required = false, defaultValue = "DESC") Order sortDirection
     ) {
         CursorPageResponseBackupDto asACursor = backupService.findAsACursor(
             worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);

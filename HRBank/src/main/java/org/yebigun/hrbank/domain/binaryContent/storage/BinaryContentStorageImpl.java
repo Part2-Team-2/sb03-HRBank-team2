@@ -30,6 +30,8 @@ import java.util.NoSuchElementException;
 @RequiredArgsConstructor
 public class BinaryContentStorageImpl implements BinaryContentStorage {
     private static final String PATH = "uploads";
+    private static final String CSV_EXTENSION = ".csv";
+    private static final String LOG_EXTENSION = ".log";
 
     private final BinaryContentRepository binaryContentRepository;
 
@@ -60,8 +62,8 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
     @Override
     public Long put(Long binaryContentId, byte[] bytes) {
         BinaryContent attachment = binaryContentRepository.findById(binaryContentId).orElseThrow(() -> new IllegalStateException("image information is not saved"));
-        String extention = getExtention(attachment.getFileName());
-        Path path = resolvePath(binaryContentId, extention);
+        String extention = getExtension(attachment.getFileName());
+        Path path = resolvePath(binaryContentId.toString(), extention);
         Path tempPath = root.resolve(path.getFileName() + ".tmp");
 
         try {
@@ -90,9 +92,21 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
     public InputStream get(Long binaryContentId) {
         BinaryContent binaryContent = binaryContentRepository.findById(binaryContentId)
             .orElseThrow(() -> new NoSuchElementException("파일을 찾을 수 없습니다."));
-        String extention = getExtention(binaryContent.getFileName());
+        String extension = getExtension(binaryContent.getFileName());
 
-        Path path = resolvePath(binaryContentId, extention);
+        if (extension.equals(CSV_EXTENSION) || extension.equals(LOG_EXTENSION)) {
+            Path path = resolvePath(binaryContent.getFileName(), "");
+            if (!Files.exists(path)) {
+                throw new NoSuchElementException("파일을 찾을 수 없습니다.");
+            }
+            try {
+                return Files.newInputStream(path);
+            } catch (IOException e) {
+                throw new NoSuchElementException("파일을 찾을 수 없습니다.");
+            }
+        }
+
+        Path path = resolvePath(binaryContentId.toString(), extension);
 
         if (!Files.exists(path)) {
             throw new NoSuchElementException("파일을 찾을 수 없습니다.");
@@ -122,11 +136,11 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         }
     }
 
-    private Path resolvePath(Long id, String extention) {
-        return root.resolve(id.toString() + extention);
+    private Path resolvePath(String fileName, String extension) {
+        return root.resolve(fileName + extension);
     }
 
-    private String getExtention(String fileName) {
+    private String getExtension(String fileName) {
         int index = fileName.lastIndexOf(".");
         if (index == -1 || index == fileName.length() - 1) {
             return "";

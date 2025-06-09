@@ -28,7 +28,7 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<Backup> findAllByRequest(String worker, String status, Instant startedAtFrom, Instant startedAtTo, Instant cursor, int size, String sortField, String sortDirection) {
+    public List<Backup> findAllByRequest(String worker, BackupStatus status, Instant startedAtFrom, Instant startedAtTo, Instant cursor, int size, String sortField, Order sortDirection) {
 
         QBackup qBackup = QBackup.backup;
         BooleanBuilder where = new BooleanBuilder();
@@ -36,8 +36,9 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
             where.and(qBackup.employeeIp.contains(worker));
         }
         if (status != null) {
-            where.and(qBackup.backupStatus.eq(BackupStatus.valueOf(status.toUpperCase())));
+            where.and(qBackup.backupStatus.eq(status));
         }
+
         if (startedAtFrom != null) {
             where.and(qBackup.startedAtFrom.goe(startedAtFrom));
         }
@@ -45,14 +46,12 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
             where.and(qBackup.startedAtTo.loe(startedAtTo));
         }
 
-        Order orderBy = sortDirection.equalsIgnoreCase("ASC") ? Order.ASC : Order.DESC;
-
         if (cursor != null) {
             if (STARTED_AT.equals(sortField)) {
-                where.and(orderBy == Order.ASC
+                where.and(sortDirection == Order.ASC
                     ? qBackup.startedAtFrom.gt(cursor) : qBackup.startedAtFrom.lt(cursor));
             } else if (ENDED_AT.equals(sortField)) {
-                where.and(orderBy == Order.ASC
+                where.and(sortDirection == Order.ASC
                     ? qBackup.startedAtTo.gt(cursor) : qBackup.startedAtTo.lt(cursor));
             }
             else {
@@ -63,7 +62,7 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
         List<Backup> backups = queryFactory
             .selectFrom(qBackup)
             .where(where)
-            .orderBy(getOrderSpecifier(sortField, orderBy, qBackup))
+            .orderBy(getOrderSpecifier(sortField, sortDirection, qBackup))
             .limit(size + 1)
             .fetch();
         return backups;

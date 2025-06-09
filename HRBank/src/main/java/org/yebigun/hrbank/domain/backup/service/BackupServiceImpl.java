@@ -1,5 +1,6 @@
 package org.yebigun.hrbank.domain.backup.service;
 
+import com.querydsl.core.types.Order;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -89,9 +90,7 @@ public class BackupServiceImpl implements BackupService {
     @Transactional(readOnly = true)
     @Override
     public CursorPageResponseBackupDto findAsACursor(
-        String worker, String status, Instant startedAtFrom, Instant startedAtTo, Long idAfter, Instant cursor, int size, String sortField, String sortDirection) {
-
-        isValidStatus(status);
+        String worker, BackupStatus status, Instant startedAtFrom, Instant startedAtTo, Long idAfter, Instant cursor, int size, String sortField, Order sortDirection) {
 
         // content
         List<Backup> backups = backupRepositoryCustom.findAllByRequest(
@@ -140,17 +139,6 @@ public class BackupServiceImpl implements BackupService {
             }
         }
         return true;
-    }
-
-    private void isValidStatus(String status) {
-        if (status == null) {
-            return;
-        }
-        try {
-            BackupStatus.valueOf(status.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("잘못된 요청 또는 정렬필드");
-        }
     }
 
     private BackupDto processSkippedBackup(Backup.BackupBuilder backupBuilder) {

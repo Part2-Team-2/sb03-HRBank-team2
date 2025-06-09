@@ -35,9 +35,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BackupBinaryContentStorageImpl implements BackupBinaryContentStorage {
     private static final String COLUMNS = "ID,직원번호,이름,이메일,부서,직급,입사일,상태";
-    private static final String CSV_EXTENTION = ".csv";
+    private static final String CSV_EXTENSION = ".csv";
     private static final String CSV_CONTENT_TYPE = "text/csv";
-    private static final String LOG_EXTENTION = ".log";
+    private static final String LOG_EXTENSION = ".log";
     private static final String LOG_CONTENT_TYPE = "text/plain";
     private static final String PATH = "uploads";
 
@@ -100,7 +100,7 @@ public class BackupBinaryContentStorageImpl implements BackupBinaryContentStorag
 //    public BinaryContent putCsv(List<Employee> employees) {
     public BinaryContent writeCsv(List<TempEmployeeDto> employees) {
         UUID fileName = UUID.randomUUID();
-        Path filePath = root.resolve(fileName + CSV_EXTENTION);
+        Path filePath = root.resolve(fileName + CSV_EXTENSION);
 
         log.warn("파일 생성 시작");
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath.toFile(),StandardCharsets.UTF_8))) {
@@ -149,7 +149,7 @@ public class BackupBinaryContentStorageImpl implements BackupBinaryContentStorag
         }
 
         BinaryContent binaryContent = BinaryContent.builder()
-            .fileName(fileName + CSV_EXTENTION)
+            .fileName(fileName + CSV_EXTENSION)
             .size(fileSize)
             .contentType(CSV_CONTENT_TYPE)
             .build();
@@ -161,7 +161,7 @@ public class BackupBinaryContentStorageImpl implements BackupBinaryContentStorag
     public BinaryContent writeLog(long backupId, Exception exception) {
 
         UUID fileName = UUID.randomUUID();
-        Path filePath = root.resolve(fileName + LOG_EXTENTION);
+        Path filePath = root.resolve(fileName + LOG_EXTENSION);
 
         String logMessage = generateLogMessage(backupId, exception);
 
@@ -174,7 +174,7 @@ public class BackupBinaryContentStorageImpl implements BackupBinaryContentStorag
         long fileSize = getSize(filePath);
 
         BinaryContent binaryContent = BinaryContent.builder()
-            .fileName(fileName + LOG_EXTENTION)
+            .fileName(fileName + LOG_EXTENSION)
             .size(fileSize)
             .contentType(LOG_CONTENT_TYPE)
             .build();
