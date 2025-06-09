@@ -114,10 +114,8 @@ public class ChangeLogServiceImpl implements ChangeLogService {
             changeLogRepository.save(changeLog);
 
             for(ChangeLogDiff diff : diffs) {
-                changeLogDiffRepository.save(
-                    diff.toBuilder()
-                        .changeLog(changeLog)
-                        .build());
+                diff.update(changeLog);
+                changeLogDiffRepository.save(diff);
             }
         }
     }
