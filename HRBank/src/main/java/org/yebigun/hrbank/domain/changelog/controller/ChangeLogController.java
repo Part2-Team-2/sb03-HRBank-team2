@@ -1,15 +1,18 @@
 package org.yebigun.hrbank.domain.changelog.controller;
 
 import java.time.Instant;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.format.annotation.DateTimeFormat.ISO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogSearchCondition;
+import org.yebigun.hrbank.domain.changelog.dto.data.DiffDto;
 import org.yebigun.hrbank.domain.changelog.dto.response.CursorPageResponseChangeLogDto;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeType;
 import org.yebigun.hrbank.domain.changelog.service.ChangeLogService;
@@ -21,6 +24,7 @@ public class ChangeLogController {
 
     private final ChangeLogService changeLogService;
 
+    // 이력 목록 조회
     @GetMapping
     public ResponseEntity<CursorPageResponseChangeLogDto> getChangeLogs(
         @RequestParam(required = false) String employeeNumber,
@@ -38,6 +42,12 @@ public class ChangeLogController {
             employeeNumber, type, memo, ipAddress, atFrom, atTo, idAfter, size, sortField, sortDirection
         );
         return ResponseEntity.ok(changeLogService.getChangeLogs(condition));
+    }
+
+    // 변경 상세 이력 조회
+    @GetMapping("/{id}/diffs")
+    public ResponseEntity<List<DiffDto>> getChangeLogDiffs(@PathVariable Long id) {
+        return ResponseEntity.ok(changeLogService.getChangeLogDiffs(id));
     }
 
 }
