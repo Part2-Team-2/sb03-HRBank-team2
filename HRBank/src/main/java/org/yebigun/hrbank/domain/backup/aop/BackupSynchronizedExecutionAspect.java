@@ -32,7 +32,7 @@ public class BackupSynchronizedExecutionAspect {
         boolean locked = lock.tryLock();
 
         if(!locked) {
-            throw new CustomBackupSynchronizedException("이미 진행중인 백업이 있음");
+            throw new CustomBackupSynchronizedException("다른 백업 작업이 진행 중입니다. 완료 후 다시 시도해주세요.");
         }
 
         try {
