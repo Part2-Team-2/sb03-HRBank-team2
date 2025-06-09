@@ -28,17 +28,16 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public List<Backup> findAllByRequest(String worker, BackupStatus status, Instant startedAtFrom, Instant startedAtTo, Instant cursor, int size, String sortField, Order sortDirection) {
-
+    public long countByRequest(String worker, BackupStatus status, Instant startedAtFrom, Instant startedAtTo) {
         QBackup qBackup = QBackup.backup;
         BooleanBuilder where = new BooleanBuilder();
+
         if (worker != null) {
             where.and(qBackup.employeeIp.contains(worker));
         }
         if (status != null) {
             where.and(qBackup.backupStatus.eq(status));
         }
-
         if (startedAtFrom != null) {
             where.and(qBackup.startedAtFrom.goe(startedAtFrom));
         }
@@ -46,23 +45,66 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
             where.and(qBackup.startedAtTo.loe(startedAtTo));
         }
 
-        if (cursor != null) {
-            if (STARTED_AT.equals(sortField)) {
-                where.and(sortDirection == Order.ASC
-                    ? qBackup.startedAtFrom.gt(cursor) : qBackup.startedAtFrom.lt(cursor));
-            } else if (ENDED_AT.equals(sortField)) {
-                where.and(sortDirection == Order.ASC
-                    ? qBackup.startedAtTo.gt(cursor) : qBackup.startedAtTo.lt(cursor));
-            }
-            else {
-                throw new IllegalArgumentException("잘못된 요청 또는 정렬필드");
-            }
+        Long totalElements = queryFactory
+            .select(qBackup.count())
+            .from(qBackup)
+            .where(where)
+            .fetchOne();
+
+        return totalElements == null ? 0 : totalElements;
+
+    }
+
+    @Override
+    public List<Backup> findAllByRequest(String worker, BackupStatus status, Instant startedAtFrom, Instant startedAtTo, Long idAfter, Instant cursor, int size, String sortField, Order sortDirection) {
+
+        QBackup qBackup = QBackup.backup;
+        BooleanBuilder where = new BooleanBuilder();
+
+        if (worker != null) {
+            where.and(qBackup.employeeIp.contains(worker));
         }
+        if (status != null) {
+            where.and(qBackup.backupStatus.eq(status));
+        }
+        if (startedAtFrom != null) {
+            where.and(qBackup.startedAtFrom.goe(startedAtFrom));
+        }
+        if (startedAtTo != null) {
+            where.and(qBackup.startedAtTo.loe(startedAtTo));
+        }
+
+        if (cursor != null && idAfter != null) {
+            BooleanBuilder cursorCondition = new BooleanBuilder();
+            if (STARTED_AT.equals(sortField)) {
+                if (sortDirection == Order.ASC) {
+                    cursorCondition.or(qBackup.startedAtFrom.gt(cursor));
+                    cursorCondition.or(qBackup.startedAtFrom.eq(cursor).and(qBackup.id.gt(idAfter)));
+                } else {
+                    cursorCondition.or(qBackup.startedAtFrom.lt(cursor));
+                    cursorCondition.or(qBackup.startedAtFrom.eq(cursor).and(qBackup.id.lt(idAfter)));
+                }
+            }
+            else {// (ENDED_AT.equals(sortField))
+                if (sortDirection == Order.ASC) {
+                        cursorCondition.or(qBackup.startedAtTo.gt(cursor));
+                    cursorCondition.or(qBackup.startedAtTo.eq(cursor).and(qBackup.id.gt(idAfter)));
+                } else {
+                    cursorCondition.or(qBackup.startedAtTo.lt(cursor));
+                    cursorCondition.or(qBackup.startedAtTo.eq(cursor).and(qBackup.id.lt(idAfter)));
+                }
+            }
+            where.and(cursorCondition);
+        }
+
+        OrderSpecifier<?> primaryOrder = getOrderSpecifier(sortField, sortDirection, qBackup);
+
+        OrderSpecifier<?> secondaryOrder = sortDirection == Order.ASC ? qBackup.id.asc() : qBackup.id.desc();
 
         List<Backup> backups = queryFactory
             .selectFrom(qBackup)
             .where(where)
-            .orderBy(getOrderSpecifier(sortField, sortDirection, qBackup))
+            .orderBy(primaryOrder, secondaryOrder)
             .limit(size + 1)
             .fetch();
         return backups;

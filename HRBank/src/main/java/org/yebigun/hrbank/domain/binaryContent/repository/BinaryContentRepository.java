@@ -1,7 +1,10 @@
 package org.yebigun.hrbank.domain.binaryContent.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.yebigun.hrbank.domain.backup.entity.BackupStatus;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
+
+import java.time.Instant;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.binaryContent.repository

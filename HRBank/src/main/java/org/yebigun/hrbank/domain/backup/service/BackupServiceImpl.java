@@ -60,7 +60,7 @@ public class BackupServiceImpl implements BackupService {
 //            .startedAtFrom(testOnlyFrom())
             .employeeIp(getIp(request));
 
-        // 변경 감지 : 가장 최근 완료된 배치 작업 시간 이후 직원 데이터가 변경된 경우에 데이터 백업이 필요한 것으로 간주합니다.
+        // 변경 감지 : 가장 최근 완료된 배치 작업 시간 이후 직원 데이터가 변경된 경우 에 데이터 백업이 필요한 것으로 간주합니다.
         if (!hasUpdate()) {
             log.warn("변경사항 없음");
             return processSkippedBackup(backupBuilder);
@@ -92,16 +92,19 @@ public class BackupServiceImpl implements BackupService {
     public CursorPageResponseBackupDto findAsACursor(
         String worker, BackupStatus status, Instant startedAtFrom, Instant startedAtTo, Long idAfter, Instant cursor, int size, String sortField, Order sortDirection) {
 
+        if (!sortField.equals(STARTED_AT) && !sortField.equals(ENDED_AT)) {
+            throw new IllegalArgumentException("지원하지 않는 정렬 필드히니다");
+        }
 
         // content
         List<Backup> backups = backupRepositoryCustom.findAllByRequest(
-            worker, status, startedAtFrom, startedAtTo, cursor, size, sortField, sortDirection);
+            worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);
 
         // cursor
-        long totalElements = backups.size();
+        long totalElements = backupRepositoryCustom.countByRequest(worker, status, startedAtFrom, startedAtTo);
         Instant nextCursor = null;
         long nextIdAfter = 0;
-        boolean hasNext = backups.size() == size+1;
+        boolean hasNext = backups.size() == size + 1;
 
         if (hasNext) {
             backups = backups.subList(0, size);
