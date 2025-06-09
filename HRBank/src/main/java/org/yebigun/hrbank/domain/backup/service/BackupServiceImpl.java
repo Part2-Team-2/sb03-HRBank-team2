@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yebigun.hrbank.domain.backup.aop.SynchronizedExecution;
 import org.yebigun.hrbank.domain.backup.temporary.TempEmployeeDto;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
 import org.yebigun.hrbank.domain.backup.dto.CursorPageResponseBackupDto;
@@ -19,9 +20,11 @@ import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.backup.service
@@ -36,7 +39,7 @@ import java.util.Optional;
 public class BackupServiceImpl implements BackupService {
     private static final String STARTED_AT = "startedAt";
     private static final String ENDED_AT = "endedAt";
-    private static final String STATUS = "status";
+
 
     private final BackupRepository backupRepository;
     private final BackupMapper backupMapper;
@@ -45,10 +48,15 @@ public class BackupServiceImpl implements BackupService {
     private final BackupRepositoryCustom backupRepositoryCustom;
 
 
+
+
+    @SynchronizedExecution
     @Override
     public BackupDto createBackup(HttpServletRequest request) {
+
         Backup.BackupBuilder backupBuilder = Backup.builder()
-            .startedAtFrom(Instant.now())
+//            .startedAtFrom(Instant.now())
+            .startedAtFrom(testOnlyFrom())
             .employeeIp(getIp(request));
 
         // 변경 감지 : 가장 최근 완료된 배치 작업 시간 이후 직원 데이터가 변경된 경우에 데이터 백업이 필요한 것으로 간주합니다.
@@ -58,13 +66,24 @@ public class BackupServiceImpl implements BackupService {
         }
 
         log.warn("변경사항 있음");
-        try{
+        try {
             log.warn("변경사항 저장");
             return processCompletedBackup(backupBuilder);
         } catch (Exception e) {
             log.warn("변경사항 실패");
-            return processFailedBackup(backupBuilder,e);
+            return processFailedBackup(backupBuilder, e);
         }
+    }
+
+    // 삭제
+    private Instant testOnlyFrom() {
+        Instant endExclusive = Instant.now();
+        Instant startInclusive = endExclusive.minus(30, ChronoUnit.DAYS);
+
+        long startMillis = startInclusive.toEpochMilli();
+        long endMillis = endExclusive.toEpochMilli();
+        long randomMillis = ThreadLocalRandom.current().nextLong(startMillis, endMillis);
+        return Instant.ofEpochMilli(randomMillis);
     }
 
     @Transactional(readOnly = true)
@@ -124,10 +143,10 @@ public class BackupServiceImpl implements BackupService {
     }
 
     private void isValidStatus(String status) {
-        if (status==null) {
+        if (status == null) {
             return;
         }
-        try{
+        try {
             BackupStatus.valueOf(status.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("잘못된 요청 또는 정렬필드");
@@ -178,8 +197,8 @@ public class BackupServiceImpl implements BackupService {
 
     private String getIp(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");
-        if(ip !=null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
-            ip=ip.split(",")[0].trim();
+        if (ip != null && !ip.isEmpty() && !"unknown".equalsIgnoreCase(ip)) {
+            ip = ip.split(",")[0].trim();
             if (isValidIp(ip)) {
                 return ip;
             }
@@ -190,15 +209,15 @@ public class BackupServiceImpl implements BackupService {
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("WL-Proxy-Client-IP");
-            if(ip != null && isValidIp(ip)) return ip;
+            if (ip != null && isValidIp(ip)) return ip;
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("HTTP_CLIENT_IP");
-            if(ip != null && isValidIp(ip)) return ip;
+            if (ip != null && isValidIp(ip)) return ip;
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getHeader("HTTP_X_FORWARDED_FOR");
-            if(ip != null && isValidIp(ip)) return ip;
+            if (ip != null && isValidIp(ip)) return ip;
         }
         if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getRemoteAddr();
@@ -209,10 +228,10 @@ public class BackupServiceImpl implements BackupService {
     private boolean isValidIp(String ip) {
         if (ip == null || ip.trim().isEmpty()) return false;
 
-        try{
+        try {
             java.net.InetAddress.getByName(ip);
             return true;
-        } catch (Exception e){
+        } catch (Exception e) {
             return false;
         }
     }

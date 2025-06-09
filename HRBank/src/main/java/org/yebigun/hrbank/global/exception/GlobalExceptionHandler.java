@@ -13,7 +13,7 @@ import org.yebigun.hrbank.global.dto.ErrorResponse;
 public class GlobalExceptionHandler {
 
     private ResponseEntity<ErrorResponse> sendErrorResponse(HttpStatus status, String message,
-        String details) {
+                                                            String details) {
         return ResponseEntity.status(status).body(ErrorResponse.of(status, message, details));
     }
 
@@ -56,4 +56,9 @@ public class GlobalExceptionHandler {
         return sendErrorResponse(HttpStatus.BAD_REQUEST, "잘못된 요청입니다.", message);
     }
 
+    // 메서드 동시실행 문제가 생겼을 경우
+    @ExceptionHandler(CustomBackupSynchronizedException.class)
+    public ResponseEntity<ErrorResponse> handleException(CustomBackupSynchronizedException e) {
+        return sendErrorResponse(HttpStatus.CONFLICT, "이미 진행 중인 백업이 있습니다.", e.getMessage());
+    }
 }

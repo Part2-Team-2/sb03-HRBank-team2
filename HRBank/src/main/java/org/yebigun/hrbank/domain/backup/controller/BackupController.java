@@ -1,5 +1,6 @@
 package org.yebigun.hrbank.domain.backup.controller;
 
+import com.mysema.commons.lang.Pair;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -26,13 +27,13 @@ import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 import org.yebigun.hrbank.global.dto.ErrorResponse;
+import org.yebigun.hrbank.global.exception.CustomBackupSynchronizedException;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -65,7 +66,37 @@ public class BackupController implements BackupApi {
 //        for (int i = 0; i < 40; i++) {
 //            backupService.createBackup(request);
 //        }
-        return ResponseEntity.status(200).body(backup);
+
+//        ExecutorService executor = Executors.newFixedThreadPool(10);
+//        List<Future<?>> futures = new ArrayList<>();
+//
+//        for (int i = 0; i < 40; i++) {
+//            futures.add(executor.submit(() -> {
+//                backupService.createBackup(request);  // 예외 그대로 던지게 둡니다.
+//            }));
+//        }
+//
+//        executor.shutdown();
+//        try {
+//            executor.awaitTermination(10, TimeUnit.SECONDS);
+//
+//            for (Future<?> future : futures) {
+//                try {
+//                    future.get(); // 예외가 있었다면 여기서 발생
+//                } catch (ExecutionException e) {
+//                    Throwable cause = e.getCause();
+//                    if (cause instanceof CustomBackupSynchronizedException ex) {
+//                        throw ex; // ❗️ 원래 예외 그대로 던짐 → 409로 응답됨
+//                    }
+//                    throw new RuntimeException("예상치 못한 예외 발생", cause);
+//                }
+//            }
+//
+//        } catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//        }
+
+        return ResponseEntity.ok(backup);
     }
 
     @GetMapping
@@ -85,6 +116,37 @@ public class BackupController implements BackupApi {
 
         return ResponseEntity.ok().body(asACursor);
     }
+
+
+
+
+    private void createSameTime(int n, HttpServletRequest request) {
+        ExecutorService executor = Executors.newFixedThreadPool(10);
+        List<Future<?>> futures = new ArrayList<>();
+        List<Throwable> exceptions = Collections.synchronizedList(new ArrayList<>());
+
+        for (int i = 0; i < n; i++) {
+            futures.add(executor.submit(() -> {
+                try {
+                    backupService.createBackup(request);
+                } catch (Exception e) {
+                    exceptions.add(e); // 예외 수집
+                }
+            }));
+        }
+
+        executor.shutdown();
+        try {
+            executor.awaitTermination(10, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        if (!exceptions.isEmpty()) {
+            throw new RuntimeException("동시 실행 중 예외 발생: " + exceptions.get(0).getMessage());
+        }
+    }
+
 
     public void dummyEmployees(int n) {
         dummyDepartments(); // 부서 중복 insert 방지
@@ -127,4 +189,5 @@ public class BackupController implements BackupApi {
             departmentRepository.save(department);
         }
     }
+
 }
