@@ -5,7 +5,7 @@ import org.springframework.stereotype.Repository;
 import org.yebigun.hrbank.domain.department.entity.Department;
 
 @Repository
-public interface DepartmentRepository extends JpaRepository<Department, Long> {
+public interface DepartmentRepository extends JpaRepository<Department, Long>, DepartmentRepositoryCustom {
 
     boolean existsByName(String name);
 
