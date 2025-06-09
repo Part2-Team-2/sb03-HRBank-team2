@@ -34,6 +34,7 @@ public class ChangeLogController {
         @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE_TIME)Instant atFrom,
         @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE_TIME)Instant atTo,
         @RequestParam(required = false) Long idAfter,
+        @RequestParam(required = false) String cursor,
         @RequestParam(defaultValue = "10") int size,
         @RequestParam(defaultValue = "at") String sortField,
         @RequestParam(defaultValue = "desc") String sortDirection
