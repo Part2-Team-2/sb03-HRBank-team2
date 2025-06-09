@@ -8,7 +8,9 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.yebigun.hrbank.domain.department.entity.QDepartment;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDistributionDto;
@@ -81,4 +83,34 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
 
         return count;
     }
+
+    @Override
+    public Map<Long, Long> countByDepartmentIds(List<Long> departmentIds) {
+        QEmployee employee = QEmployee.employee;
+
+        if (departmentIds == null || departmentIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<DepartmentEmployeeCount> results = queryFactory
+            .select(Projections.constructor(DepartmentEmployeeCount.class,
+                employee.department.id,
+                employee.count()
+            ))
+            .from(employee)
+            .where(employee.department.id.in(departmentIds))
+            .groupBy(employee.department.id)
+            .fetch();
+
+        return results.stream()
+            .collect(Collectors.toMap(
+                DepartmentEmployeeCount::departmentId,
+                DepartmentEmployeeCount::employeeCount
+            ));
+    }
+
+        public static record DepartmentEmployeeCount(Long departmentId, Long employeeCount) {
+
+    }
+
 }
