@@ -8,13 +8,19 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDistributionDto;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
-import org.yebigun.hrbank.domain.employee.dto.request.EmployeeListRequest;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeTrendDto;
+import org.yebigun.hrbank.domain.employee.dto.request.EmployeeCreateRequest;
+import org.yebigun.hrbank.domain.employee.dto.request.EmployeeListRequest;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.global.dto.CursorPageResponse;
 import org.yebigun.hrbank.global.dto.ErrorResponse;
@@ -149,5 +155,58 @@ public interface EmployeeApi {
     })
     ResponseEntity<CursorPageResponse<EmployeeDto>> findEmployees(
         @Parameter(description = "직원 목록 조회를 위한 파라미터") EmployeeListRequest employeeListRequest
+    );
+
+    @Operation(
+        summary     = "직원 등록",
+        description = "새로운 직원을 등록합니다."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description  = "등록 성공",
+            content      = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema    = @Schema(implementation = EmployeeDto.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description  = "잘못된 요청 또는 중복된 이메일",
+            content      = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema    = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description  = "부서를 찾을 수 없음",
+            content      = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema    = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description  = "서버 오류",
+            content      = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema    = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ResponseEntity<EmployeeDto> createEmployee(
+        @Parameter(description = "직원 등록용 데이터(JSON)")
+        @Valid
+        @RequestPart("employee")
+        EmployeeCreateRequest employee,
+
+        @Parameter(
+            description = "프로필 이미지 파일 (optional)",
+            schema = @Schema(type = "string", format = "binary")
+        )
+        @RequestPart(value = "profile", required = false)
+        MultipartFile profile
     );
 }
