@@ -19,11 +19,45 @@ import org.springframework.web.multipart.MultipartFile;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
 import org.yebigun.hrbank.domain.employee.dto.request.EmployeeCreateRequest;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDistributionDto;
+import org.yebigun.hrbank.domain.employee.dto.data.EmployeeTrendDto;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.global.dto.ErrorResponse;
 
 @Tag(name = "직원 관리", description = "직원 관리 API")
 public interface EmployeeApi {
+
+    @Operation(summary = "직원 수 추이 조회")
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(
+                mediaType = "application/json",
+                array = @ArraySchema(schema = @Schema(implementation = EmployeeTrendDto.class))
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "잘못된 요청 또는 지원하지 않는 시간 단위",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "서버 오류",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    ResponseEntity<List<EmployeeTrendDto>> getEmployeeTrend(
+        @Parameter(description = "시작 일시(기본값: 현재로부터 unit 기준 12개 이전") LocalDate from,
+        @Parameter(description = "종료 일시(기본값: 현재)") LocalDate to,
+        @Parameter(description = "시간 단위(day, week, month, quarter, year, 기본값:month)") String unit
+    );
 
     @Operation(summary = "직원 분포 조회")
     @ApiResponses({

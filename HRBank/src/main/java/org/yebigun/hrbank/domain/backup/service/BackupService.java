@@ -1,8 +1,12 @@
 package org.yebigun.hrbank.domain.backup.service;
 
+import com.querydsl.core.types.Order;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.stereotype.Service;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
+import org.yebigun.hrbank.domain.backup.dto.CursorPageResponseBackupDto;
+import org.yebigun.hrbank.domain.backup.entity.BackupStatus;
+
+import java.time.Instant;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.backup.service
@@ -12,4 +16,7 @@ import org.yebigun.hrbank.domain.backup.dto.BackupDto;
  */
 public interface BackupService {
     BackupDto createBackup(HttpServletRequest request);
+
+    CursorPageResponseBackupDto findAsACursor(
+        String worker, BackupStatus status, Instant startedAtFrom, Instant startedAtTo, Long idAfter, Instant cursor, int size, String sortField, Order sortDirection);
 }

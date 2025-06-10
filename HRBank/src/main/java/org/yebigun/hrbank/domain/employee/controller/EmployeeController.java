@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
 import org.yebigun.hrbank.domain.employee.dto.request.EmployeeCreateRequest;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDistributionDto;
+import org.yebigun.hrbank.domain.employee.dto.data.EmployeeTrendDto;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.domain.employee.service.EmployeeService;
 
@@ -21,6 +22,18 @@ import org.yebigun.hrbank.domain.employee.service.EmployeeService;
 public class EmployeeController implements EmployeeApi {
 
     private final EmployeeService employeeService;
+
+    @Override
+    @GetMapping("/stats/trend")
+    public ResponseEntity<List<EmployeeTrendDto>> getEmployeeTrend(
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
+        @RequestParam(required = false, defaultValue = "month") String unit) {
+
+        List<EmployeeTrendDto> result = employeeService.getEmployeeTrend(from, to, unit);
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
 
     @Override
     @GetMapping("/stats/distribution")
@@ -35,17 +48,13 @@ public class EmployeeController implements EmployeeApi {
     }
 
     @Override
-    @GetMapping(path = "/count")
+    @GetMapping("/count")
     public ResponseEntity<Long> getEmployeeCount(
         @RequestParam(required = false) EmployeeStatus status,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
         @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
 
-        if (toDate == null) {
-            toDate = LocalDate.now();
-        }
-
-        long count = employeeService.getEmployeeCount(status, fromDate, toDate);
+        Long count = employeeService.getEmployeeCount(status, fromDate, toDate);
 
         return ResponseEntity.status(HttpStatus.OK).body(count);
     }

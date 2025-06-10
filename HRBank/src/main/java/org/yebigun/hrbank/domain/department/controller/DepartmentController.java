@@ -11,11 +11,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.yebigun.hrbank.domain.department.dto.data.DepartmentDto;
 import org.yebigun.hrbank.domain.department.dto.request.DepartmentCreateRequest;
 import org.yebigun.hrbank.domain.department.dto.request.DepartmentUpdateRequest;
 import org.yebigun.hrbank.domain.department.service.DepartmentService;
+import org.yebigun.hrbank.global.dto.CursorPageResponse;
 
 @RestController
 @RequiredArgsConstructor
@@ -63,6 +65,21 @@ public class DepartmentController implements DepartmentApi {
         departmentService.delete(id);
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+    }
+
+    @GetMapping
+    public ResponseEntity<CursorPageResponse<DepartmentDto>> findDepartments(
+        @RequestParam(required = false) String nameOrDescription,
+        @RequestParam(required = false) Long idAfter,
+        @RequestParam(required = false) String cursor,
+        @RequestParam(defaultValue = "10") Integer size,
+        @RequestParam(defaultValue = "establishedDate") String sortField,
+        @RequestParam(defaultValue = "asc") String sortDirection
+    ) {
+        CursorPageResponse<DepartmentDto> response = departmentService.findDepartments(
+            nameOrDescription, idAfter, cursor, size, sortField, sortDirection
+        );
+        return ResponseEntity.ok(response);
     }
 
 }
