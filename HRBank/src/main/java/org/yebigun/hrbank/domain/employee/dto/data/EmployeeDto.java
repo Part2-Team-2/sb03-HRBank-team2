@@ -1,6 +1,7 @@
 package org.yebigun.hrbank.domain.employee.dto.data;
 
 import java.time.LocalDate;
+import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 
 public record EmployeeDto(
     Long id,
@@ -13,4 +14,5 @@ public record EmployeeDto(
     LocalDate hireDate,
     EmployeeStatus status,
     Long profileImageId
-) {}
+) {
+}
