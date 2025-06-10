@@ -41,15 +41,8 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new IllegalArgumentException("지원하지 않는 시간 단위입니다.");
         }
 
-        LocalDate today = LocalDate.now();
-
-        if (from == null) {
-            from = getDate(unit);
-        }
-
-        if (to == null) {
-            to = today;
-        }
+        from = from != null ? from : getDate(unit);
+        to = to != null ? to : LocalDate.now();
 
         List<EmployeeTrendDto> employeeTrends = employeeRepository.findEmployeeTrend(from, to, unit);
 
