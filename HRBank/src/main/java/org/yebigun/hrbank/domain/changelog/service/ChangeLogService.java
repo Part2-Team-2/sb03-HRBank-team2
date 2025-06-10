@@ -10,6 +10,10 @@ import org.yebigun.hrbank.domain.employee.entity.Employee;
 
 public interface ChangeLogService {
 
+    void createRecord(Employee afterValue, String memo, String ipAddress);
+    void updateRecord(Employee beforeValue, Employee afterValue, String memo, String ipAddress);
+    void deleteRecord(Employee beforeValue, String ipAddress);
+
     void recordChangeLog(Employee beforeValue, Employee afterValue, String memo, String ipAddress, ChangeType changeType);
 
     // 이력 목록 조회

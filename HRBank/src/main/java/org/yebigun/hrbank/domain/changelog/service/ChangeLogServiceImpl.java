@@ -28,6 +28,21 @@ public class ChangeLogServiceImpl implements ChangeLogService {
     private final ChangeLogDiffRepository changeLogDiffRepository;
 
     @Override
+    public void createRecord(Employee afterValue, String memo, String ipAddress) {
+        recordChangeLog(null, afterValue, resolveMemo(memo, ChangeType.CREATED), ipAddress, ChangeType.CREATED);
+    }
+
+    @Override
+    public void updateRecord(Employee beforeValue, Employee afterValue, String memo, String ipAddress) {
+        recordChangeLog(beforeValue, afterValue, resolveMemo(memo, ChangeType.UPDATED), ipAddress, ChangeType.UPDATED);
+    }
+
+    @Override
+    public void deleteRecord(Employee beforeValue, String ipAddress) {
+        recordChangeLog(beforeValue, null, null, ipAddress, ChangeType.DELETED);
+    }
+
+    @Override
     public void recordChangeLog(Employee beforeValue, Employee afterValue, String memo, String ipAddress, ChangeType changeType) {
 
         if (changeType == null) {
