@@ -217,18 +217,14 @@ public interface EmployeeApi {
     @ApiResponses({
         @ApiResponse(
             responseCode = "204",
-            description  = "삭제 성공",
-            content      = @Content(
-                mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema    = @Schema(implementation = EmployeeDto.class)
-            )
+            description  = "삭제 성공"
         ),
         @ApiResponse(
             responseCode = "404",
             description  = "직원을 찾을 수 없음",
             content      = @Content(
                 mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema    = @Schema(implementation = EmployeeDto.class)
+                schema    = @Schema(implementation = ErrorResponse.class)
             )
         ),
         @ApiResponse(
@@ -236,7 +232,7 @@ public interface EmployeeApi {
             description  = "서버 오류",
             content      = @Content(
                 mediaType = MediaType.APPLICATION_JSON_VALUE,
-                schema    = @Schema(implementation = EmployeeDto.class)
+                schema    = @Schema(implementation = ErrorResponse.class)
             )
         )
     })
