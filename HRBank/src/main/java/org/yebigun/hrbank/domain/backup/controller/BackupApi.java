@@ -94,7 +94,6 @@ public interface BackupApi {
             )
         )
     })
-
     @GetMapping
     ResponseEntity<CursorPageResponseBackupDto> findAll(
         @Parameter(description = "작업자") String worker,
