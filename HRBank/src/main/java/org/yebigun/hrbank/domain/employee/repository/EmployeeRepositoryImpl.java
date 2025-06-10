@@ -33,8 +33,6 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
 
     @Override
     public List<EmployeeTrendDto> findEmployeeTrend(LocalDate from, LocalDate to, String unit) {
-        QEmployee e = QEmployee.employee;
-
         // 1. 필요한 날짜들만 조회 (전체 데이터 대신 날짜별 카운트)
         Map<LocalDate, Long> dateCounts = new HashMap<>();
 
@@ -78,6 +76,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
             }
 
             trend.add(new EmployeeTrendDto(date, count, change, changeRate));
+
             prevCount = count;
         }
 
@@ -119,8 +118,6 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
 
     @Override
     public Long countByCondition(EmployeeStatus status, LocalDate fromDate, LocalDate toDate) {
-        QEmployee e = QEmployee.employee;
-
         BooleanBuilder builder = new BooleanBuilder();
 
         if (status != null) {
@@ -135,13 +132,13 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
             }
         }
 
-        Long count = Optional.ofNullable(queryFactory
+        Long count = queryFactory
             .select(e.count())
             .from(e)
             .where(builder)
-            .fetchOne()).orElse(0L);
+            .fetchOne();
 
-        return count;
+        return count != null ? count : 0L;
     }
 
     @Override
@@ -164,22 +161,6 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
                     }
                     break;
 
-                case "hireDate":
-                    if (sortDirection.equalsIgnoreCase("asc")) {
-                        builder.and(e.hireDate.gt((LocalDate) cursorValue));
-                    } else {
-                        builder.and(e.hireDate.lt((LocalDate) cursorValue));
-                    }
-                    break;
-
-                case "position":
-                    if (sortDirection.equalsIgnoreCase("asc")) {
-                        builder.and(e.position.gt((String) cursorValue));
-                    } else {
-                        builder.and(e.position.lt((String) cursorValue));
-                    }
-                    break;
-
                 case "employeeNumber":
                     if (sortDirection.equalsIgnoreCase("asc")) {
                         builder.and(e.employeeNumber.gt((String) cursorValue));
@@ -188,14 +169,22 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
                     }
                     break;
 
+                case "hireDate":
+                    if (sortDirection.equalsIgnoreCase("asc")) {
+                        builder.and(e.hireDate.gt((LocalDate) cursorValue));
+                    } else {
+                        builder.and(e.hireDate.lt((LocalDate) cursorValue));
+                    }
+                    break;
+
                 default:
                     throw new IllegalArgumentException("지원하지 않는 sortField: " + sortField);
             }
         }
 
-
         OrderSpecifier<?> orderSpecifier = getOrderSpecifier(sortField, sortDirection);
 
+        // 다음 페이지 존재 여부 확인을 위해 size + 1개 조회
         List<Employee> employees = queryFactory
             .selectFrom(e)
             .innerJoin(e.department, d).fetchJoin()
@@ -237,23 +226,20 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
         BooleanBuilder builder = getBuilder(nameOrEmail, employeeNumber, departmentName, position,
             hireDateFrom, hireDateTo, status);
 
-        Long totalCount = Optional.ofNullable(queryFactory
+        Long totalCount = queryFactory
             .select(e.count())
             .from(e)
             .innerJoin(e.department, d)
             .where(builder)
-            .fetchOne()).orElse(0L);
+            .fetchOne();
 
-        return totalCount;
+        return totalCount != null ? totalCount : 0L;
     }
 
     private Comparable<?> parseCursorValue(String sortField, String cursor) {
         return switch (sortField) {
-            case "name" -> cursor;
-            case "employeeNumber" -> cursor;
-
+            case "name", "employeeNumber" -> cursor;
             case "hireDate" -> LocalDate.parse(cursor); // ISO 형식 (yyyy-MM-dd)
-
             default -> throw new IllegalArgumentException("지원하지 않는 정렬 필드입니다.");
         };
     }

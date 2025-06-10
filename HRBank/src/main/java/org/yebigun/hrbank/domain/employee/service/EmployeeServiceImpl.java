@@ -97,9 +97,19 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         // cursor
         boolean hasNext = employees.size() > size;
-        String nextCursor = hasNext ? getNextCursor(sortField, employees.get(employees.size() - 1)): null;
-        Long nextIdAfter = hasNext ? employees.get(employees.size() - 1).getId() : null;
 
+        String nextCursor;
+        Long nextIdAfter;
+
+        if (hasNext) {
+            // 마지막 요소는 다음 페이지가 존재하는지 여부만 확인하기 위한 데이터
+            employees.remove(employees.size() - 1);
+            nextCursor = getNextCursor(sortField, employees.get(employees.size() - 1));
+            nextIdAfter = employees.get(employees.size() - 1).getId();
+        } else {
+            nextCursor = null;
+            nextIdAfter = null;
+        }
 
         // 추후 employeeMapper 구현 시 변경 예정
         List<EmployeeDto> employeeDtos = employees.stream()
