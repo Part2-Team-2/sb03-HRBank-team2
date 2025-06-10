@@ -42,6 +42,9 @@ public class ChangeLogServiceImpl implements ChangeLogService {
             throw new IllegalArgumentException("UPDATED/DELETED 타입에서는 beforeValue가 필수입니다");
         }
 
+        // memo 기본값 보정
+        String effectiveMemo = resolveMemo(memo, changeType);
+
         List<ChangeLogDiff> diffs = new ArrayList<>();
 
         switch (changeType) {
@@ -101,7 +104,7 @@ public class ChangeLogServiceImpl implements ChangeLogService {
                 .type(changeType)
                 // CREATED 시 afterValue 사용, UPDATED & DELETED 시 beforeValue 사용
                 .employeeNumber(changeType ==  ChangeType.CREATED ? afterValue.getEmployeeNumber() : beforeValue.getEmployeeNumber())
-                .memo(memo)
+                .memo(effectiveMemo)
                 .ipAddress(ipAddress)
                 .at(Instant.now())
                 .build();
@@ -143,5 +146,17 @@ public class ChangeLogServiceImpl implements ChangeLogService {
             .before(beforeValue)
             .after(afterValue)
             .build();
+    }
+
+    private String resolveMemo(String memo, ChangeType changeType) {
+        if (memo != null && !memo.isBlank()) {
+            return memo;
+        }
+
+        return switch (changeType) {
+            case CREATED -> "신규 직원 등록";
+            case UPDATED -> "직원 정보 수정";
+            case DELETED -> "직원 삭제";
+        };
     }
 }
