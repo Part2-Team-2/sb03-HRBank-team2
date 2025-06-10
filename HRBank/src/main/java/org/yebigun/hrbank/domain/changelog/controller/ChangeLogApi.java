@@ -2,6 +2,7 @@ package org.yebigun.hrbank.domain.changelog.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -9,7 +10,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
+import org.yebigun.hrbank.domain.changelog.dto.data.DiffDto;
 import org.yebigun.hrbank.domain.changelog.dto.response.CursorPageResponseChangeLogDto;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeType;
 import org.yebigun.hrbank.global.dto.ErrorResponse;
@@ -96,4 +99,64 @@ public interface ChangeLogApi {
         @Parameter(description = "정렬 필드 ( asc, desc ) 기본값 : desc") String sortDirection
     );
 
+    @Operation(
+        summary = "직원 정보 수정 이력 상세 조회",
+        description = "직원 정보 수정 이력의 상세 정보를 조회합니다. 변경 상세 내용이 포함됩니다."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(
+                mediaType = "application/json",
+                array = @ArraySchema(schema = @Schema(implementation = DiffDto.class)),
+                examples = @ExampleObject(value = """
+                [
+                    {
+                        "propertyName": "직함",
+                        "before": "사원",
+                        "after": "대리"
+                    }
+                ]
+                """)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description = "이력을 찾을 수 없음",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                {
+                    "timestamp": "2025-03-06T05:39:06.152068Z",
+                    "status": 404,
+                    "message": "이력을 찾을 수 없습니다.",
+                    "details": "해당 ID의 이력이 존재하지 않습니다."
+                }
+                """)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "서버 오류",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                {
+                    "timestamp": "2025-03-07T14:43:34.152068Z",
+                    "status": 500,
+                    "message": "서버 오류가 발생했습니다.",
+                    "details": "내부 서버 오류"
+                }
+                """)
+            )
+        )
+    })
+    ResponseEntity<List<DiffDto>> getChangeLogDiffs(
+        @Parameter(description = "이력 ID", required = true) Long id
+    );
+
+    
 }
