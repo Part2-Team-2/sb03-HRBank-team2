@@ -3,11 +3,14 @@ package org.yebigun.hrbank.domain.employee.repository;
 import static com.querydsl.core.types.dsl.Expressions.numberTemplate;
 
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.StringPath;
+import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -15,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.yebigun.hrbank.domain.department.dto.data.DepartmentEmployeeCount;
@@ -34,44 +38,45 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
 
     @Override
     public List<EmployeeTrendDto> findEmployeeTrend(LocalDate from, LocalDate to, String unit) {
-        // 1. 필요한 날짜들만 조회 (전체 데이터 대신 날짜별 카운트)
-        Map<LocalDate, Long> dateCounts = new HashMap<>();
 
-        // 각 날짜별로 해당 날짜까지의 누적 카운트를 DB에서 직접 계산
-        LocalDate current = from;
-        while (!current.isAfter(to)) {
-            Long count = queryFactory
-                .select(e.count())
-                .from(e)
-                .where(e.status.eq(EmployeeStatus.ACTIVE)
-                    .and(e.createdAt.loe(current.atStartOfDay(ZoneId.systemDefault()).toInstant())))
-                .fetchOne();
+        List<Instant> allActiveCreatedAts = queryFactory
+            .select(e.createdAt)
+            .from(e)
+            .where(e.status.eq(EmployeeStatus.ACTIVE))
+            .fetch();
 
-            dateCounts.put(current, count != null ? count : 0L);
+        ZoneId zoneId = ZoneId.systemDefault();
 
-            current = switch (unit) {
-                case "day" -> current.plusDays(1);
-                case "week" -> current.plusWeeks(1);
-                case "month" -> current.plusMonths(1);
-                case "quarter" -> current.plusMonths(3);
-                case "year" -> current.plusYears(1);
-                default -> current.plusMonths(1);
-            };
+        TreeMap<LocalDate, Long> dailyCounts = new TreeMap<>();
+
+        // 1. createdAt -> LocalDate 변환 후 빈도 수 집계
+        for (Instant instant : allActiveCreatedAts) {
+            LocalDate date = instant.atZone(zoneId).toLocalDate();
+            dailyCounts.merge(date, 1L, Long::sum);
+        }
+        List<LocalDate> datePoints = generateDatePoints(from, to, unit);
+
+        // 2. TreeMap 누적합으로 변환
+        TreeMap<LocalDate, Long> cumulativeCounts = new TreeMap<>();
+        long runningTotal = 0;
+
+        for (Map.Entry<LocalDate, Long> entry : dailyCounts.entrySet()) {
+            runningTotal += entry.getValue();
+            cumulativeCounts.put(entry.getKey(), runningTotal);
         }
 
-        // 2. 변화량 계산
         List<EmployeeTrendDto> trend = new ArrayList<>();
-        long prevCount = 0L;
+        long prevCount = 0;
 
-        for (Map.Entry<LocalDate, Long> entry : dateCounts.entrySet().stream()
-            .sorted(Map.Entry.comparingByKey()).toList()) {
+        for (LocalDate date : datePoints) {
+            Map.Entry<LocalDate, Long> floor = cumulativeCounts.floorEntry(date);
+            long count = floor != null ? floor.getValue() : 0;
 
-            LocalDate date = entry.getKey();
-            long count = entry.getValue();
-            long change = count - prevCount;
+            long change = 0;
             double changeRate = 0.0;
 
             if (prevCount != 0) {
+                change = count - prevCount;
                 changeRate = (count - prevCount) * 100.0 / prevCount;
                 changeRate = Math.round(changeRate * 10.0) / 10.0;
             }
@@ -292,5 +297,26 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
         }
 
         return builder;
+    }
+
+    private List<LocalDate> generateDatePoints(LocalDate from, LocalDate to, String unit) {
+        List<LocalDate> datePoints = new ArrayList<>();
+
+        LocalDate current = from;
+
+        while (!current.isAfter(to)) {
+            datePoints.add(current);
+
+            current = switch (unit) {
+                case "day" -> current.plusDays(1);
+                case "week" -> current.plusWeeks(1);
+                case "month" -> current.plusMonths(1);
+                case "quarter" -> current.plusMonths(3);
+                case "year" -> current.plusYears(1);
+                default -> throw new IllegalArgumentException("지원하지 않는 시간 단위입니다.");
+            };
+        }
+
+        return datePoints;
     }
 }

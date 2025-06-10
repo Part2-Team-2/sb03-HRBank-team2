@@ -4,9 +4,9 @@ import java.time.LocalDate;
 
 public record EmployeeTrendDto(
     LocalDate date,
-    Long count,
-    Long change,
-    Double changeRate
+    long count,
+    long change,
+    double changeRate
 ) {
 
 }
