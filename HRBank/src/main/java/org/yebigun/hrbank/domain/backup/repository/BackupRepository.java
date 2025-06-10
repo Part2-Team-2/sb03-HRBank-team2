@@ -17,4 +17,5 @@ public interface BackupRepository extends JpaRepository<Backup, Long> {
     Optional<Backup> findTopByOrderByCreatedAtDesc();
 
     Optional<Backup> findTopByBackupStatusOrderByCreatedAtDesc(BackupStatus status);
+
 }
