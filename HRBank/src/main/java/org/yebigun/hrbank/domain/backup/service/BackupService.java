@@ -21,4 +21,6 @@ public interface BackupService {
 
     CursorPageResponseBackupDto findAsACursor(
         String worker, BackupStatus status, Instant startedAtFrom, Instant startedAtTo, Long idAfter, Instant cursor, int size, String sortField, Order sortDirection);
+
+    BackupDto findLatest(BackupStatus status);
 }
