@@ -68,4 +68,10 @@ public class EmployeeController implements EmployeeApi {
         return ResponseEntity.ok(created);
     }
 
+    @Override
+    @GetMapping("/{id}")
+    public ResponseEntity<EmployeeDto> getEmployeeById(@PathVariable Long id) {
+        EmployeeDto dto = employeeService.getEmployeeById(id);
+        return ResponseEntity.ok(dto);
+    }
 }
