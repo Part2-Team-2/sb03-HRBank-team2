@@ -1,8 +1,10 @@
 package org.yebigun.hrbank.domain.employee.service;
 
 import java.time.LocalDate;
+import java.time.Year;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -95,12 +97,17 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeRepository.countByCondition(status, fromDate, toDate);
     }
 
-private String generateUniqueEmployeeNumber() {
-    String year = String.valueOf(java.time.Year.now().getValue());
-    String prefix = "EMP-" + year + "-";
-    int maxSeq = employeeRepository.findMaxSequenceByPrefix(prefix).orElse(0);
-    int nextSeq = maxSeq + 1;
-    return String.format("%s%03d", prefix, nextSeq);
-   }
+    private String generateUniqueEmployeeNumber() {
+        String year   = String.valueOf(Year.now().getValue());
+        String prefix = "EMP-" + year + "-";
+        String empNo;
+
+        do {
+            int rand = ThreadLocalRandom.current().nextInt(0, 100_000_000);
+            empNo = prefix + String.format("%08d", rand);
+        } while (employeeRepository.existsByEmployeeNumber(empNo));
+
+        return empNo;
+    }
 
 }
