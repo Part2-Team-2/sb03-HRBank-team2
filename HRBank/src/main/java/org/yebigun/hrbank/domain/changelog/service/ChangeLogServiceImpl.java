@@ -131,6 +131,11 @@ public class ChangeLogServiceImpl implements ChangeLogService {
             .collect(Collectors.toList());
     }
 
+    @Override
+    public long countAllChangeLogs(Instant from, Instant to) {
+        return changeLogRepository.countByAtBetween(from, to);
+    }
+
     // 변경 상세 내용 필드 구성
     private ChangeLogDiff createDiff(String propertyName, String beforeValue, String afterValue) {
         return ChangeLogDiff.builder()

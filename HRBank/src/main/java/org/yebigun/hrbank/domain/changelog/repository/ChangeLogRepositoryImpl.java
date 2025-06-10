@@ -30,35 +30,8 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
     public CursorPageResponseChangeLogDto searchChangeLogs(ChangeLogSearchCondition condition) {
         QChangeLog changeLog = QChangeLog.changeLog;
 
-        // 검색 조건 동적 조립
-        BooleanBuilder builder = new BooleanBuilder();
-
-        // 사번, 메모, IP 주소 : 부분 일치
-        // 시간 : 범위 조건(from ~ to)
-        // 유형 : 완전 일치
-        // 조건 동시 만족
-
-        if (condition.employeeNumber() != null) {
-            builder.and(changeLog.employeeNumber.containsIgnoreCase(condition.employeeNumber()));
-        }
-        if (condition.type() != null) {
-            builder.and(changeLog.type.eq(condition.type()));
-        }
-        if (condition.memo() != null) {
-            builder.and(changeLog.memo.containsIgnoreCase(condition.memo()));
-        }
-        if (condition.ipAddress() != null) {
-            builder.and(changeLog.ipAddress.containsIgnoreCase(condition.ipAddress()));
-        }
-        if (condition.atFrom() != null) {
-            builder.and(changeLog.at.goe(condition.atFrom()));
-        }
-        if (condition.atTo() != null) {
-            builder.and(changeLog.at.loe(condition.atTo()));
-        }
-        if (condition.idAfter() != null) {
-            builder.and(changeLog.id.lt(condition.idAfter()));
-        }
+        // 필터링
+        BooleanBuilder builder = buildFilterCondition(condition, changeLog);
 
         // 정렬 조건 적용
         OrderSpecifier<?> orderSpecifier = getOrderSpecifier(condition.sortField(), condition.sortDirection(), changeLog);
@@ -93,6 +66,38 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
             result.size(),    // 실제 전체 fetch된 row 수
             hasNext           // 다음 페이지 여부
         );
+    }
+
+    private BooleanBuilder buildFilterCondition(ChangeLogSearchCondition condition, QChangeLog changeLog) {
+        // 검색 조건 동적 조립
+        BooleanBuilder builder = new BooleanBuilder();
+
+        // 사번, 메모, IP 주소 : 부분 일치
+        // 시간 : 범위 조건(from ~ to)
+        // 유형 : 완전 일치
+        // 조건 동시 만족
+        if (condition.employeeNumber() != null) {
+            builder.and(changeLog.employeeNumber.containsIgnoreCase(condition.employeeNumber()));
+        }
+        if (condition.type() != null) {
+            builder.and(changeLog.type.eq(condition.type()));
+        }
+        if (condition.memo() != null) {
+            builder.and(changeLog.memo.containsIgnoreCase(condition.memo()));
+        }
+        if (condition.ipAddress() != null) {
+            builder.and(changeLog.ipAddress.containsIgnoreCase(condition.ipAddress()));
+        }
+        if (condition.atFrom() != null) {
+            builder.and(changeLog.at.goe(condition.atFrom()));
+        }
+        if (condition.atTo() != null) {
+            builder.and(changeLog.at.loe(condition.atTo()));
+        }
+        if (condition.idAfter() != null) {
+            builder.and(changeLog.id.lt(condition.idAfter()));
+        }
+        return builder;
     }
 
     // 정렬 필드 및 방향 동적 지정

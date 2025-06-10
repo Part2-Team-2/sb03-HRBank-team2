@@ -1,5 +1,6 @@
 package org.yebigun.hrbank.domain.changelog.service;
 
+import java.time.Instant;
 import java.util.List;
 import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogSearchCondition;
 import org.yebigun.hrbank.domain.changelog.dto.data.DiffDto;
@@ -16,4 +17,7 @@ public interface ChangeLogService {
 
     // 이력 목록 상세 조회
     List<DiffDto> getChangeLogDiffs(Long changeLogId);
+
+    // 이력 건수 조회
+    long countAllChangeLogs(Instant from, Instant to);
 }
