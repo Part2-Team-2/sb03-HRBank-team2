@@ -11,17 +11,19 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.yebigun.hrbank.domain.department.entity.Department;
 import org.yebigun.hrbank.domain.department.repository.DepartmentRepository;
-import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDistributionDto;
-import org.yebigun.hrbank.domain.employee.dto.request.EmployeeCreateRequest;
-import org.yebigun.hrbank.domain.employee.entity.Employee;
+import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeTrendDto;
+import org.yebigun.hrbank.domain.employee.dto.request.EmployeeCreateRequest;
+import org.yebigun.hrbank.domain.employee.dto.request.EmployeeListRequest;
+import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.domain.employee.mapper.EmployeeMapper;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
+import org.yebigun.hrbank.global.dto.CursorPageResponse;
 
-@Service
 @RequiredArgsConstructor
+@Service
 public class EmployeeServiceImpl implements EmployeeService {
 
     private final EmployeeRepository employeeRepository;
@@ -29,6 +31,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeMapper employeeMapper;
     private static final Set<String> VALID_UNIT = Set.of("day", "week", "month", "quarter", "year");
     private static final Set<String> VALID_GROUP_BY = Set.of("department", "position");
+    private static final Set<String> VALID_SORT_DIRECTION = Set.of("asc", "desc");
     private static final Long UNIT = 12L;
 
     @Override
@@ -38,15 +41,8 @@ public class EmployeeServiceImpl implements EmployeeService {
             throw new IllegalArgumentException("지원하지 않는 시간 단위입니다.");
         }
 
-        LocalDate today = LocalDate.now();
-
-        if (from == null) {
-            from = getDate(unit);
-        }
-
-        if (to == null) {
-            to = today;
-        }
+        from = from != null ? from : getDate(unit);
+        to = to != null ? to : LocalDate.now();
 
         List<EmployeeTrendDto> employeeTrends = employeeRepository.findEmployeeTrend(from, to, unit);
 
@@ -124,6 +120,69 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         return employeeRepository.countByCondition(status, fromDate, toDate);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public CursorPageResponse<EmployeeDto> findEmployees(EmployeeListRequest request) {
+        String nameOrEmail = request.nameOrEmail();
+        String employeeNumber = request.employeeNumber();
+        String departmentName = request.departmentName();
+        String position = request.position();
+        LocalDate hireDateFrom = request.hireDateFrom();
+        LocalDate hireDateTo = request.hireDateTo();
+        EmployeeStatus status = request.status();
+        String cursor = request.cursor();
+        int size = request.size();
+        String sortField = request.sortField();
+        String sortDirection = request.sortDirection();
+
+        if (!VALID_SORT_DIRECTION.contains(sortDirection)) {
+            throw new IllegalArgumentException("잘못된 정렬 방향입니다.");
+        }
+
+        List<Employee> employees = employeeRepository.findAllByRequest(
+            nameOrEmail, employeeNumber, departmentName, position, hireDateFrom, hireDateTo, status,
+            cursor,
+            size, sortField, sortDirection
+        );
+
+        // cursor
+        boolean hasNext = employees.size() > size;
+
+        String nextCursor;
+        Long nextIdAfter;
+
+        if (hasNext) {
+            // 마지막 요소는 다음 페이지가 존재하는지 여부만 확인하기 위한 데이터
+            employees.remove(employees.size() - 1);
+            nextCursor = getNextCursor(sortField, employees.get(employees.size() - 1));
+            nextIdAfter = employees.get(employees.size() - 1).getId();
+        } else {
+            nextCursor = null;
+            nextIdAfter = null;
+        }
+        
+        List<EmployeeDto> employeeDtos = employees.stream()
+            .map(employeeMapper::toDto)
+            .toList();
+
+        long totalElements = employeeRepository.countByRequest(nameOrEmail, employeeNumber, departmentName,
+            position, hireDateFrom, hireDateTo, status);
+
+        CursorPageResponse<EmployeeDto> response = new CursorPageResponse<>(employeeDtos, nextIdAfter,
+            nextCursor, size, totalElements, hasNext);
+
+        return response;
+    }
+
+    private String getNextCursor(String sortField, Employee employee) {
+        return switch (sortField) {
+            case "name" -> employee.getName();
+            case "employeeNumber" -> employee.getEmployeeNumber();
+            case "hireDate" -> employee.getHireDate().toString();
+            default -> throw new IllegalArgumentException("지원하지 않는 정렬 필드입니다.");
+        };
     }
 
     private String generateUniqueEmployeeNumber() {
