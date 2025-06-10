@@ -2,7 +2,6 @@ package org.yebigun.hrbank.domain.employee.service;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -45,38 +44,43 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional
     public EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profile) {
 
-        if (request.getName() == null || request.getName().trim().isEmpty())
+        // record 방식: getXxx() → xxx()
+        if (request.name() == null || request.name().trim().isEmpty())
             throw new IllegalArgumentException("이름은 필수입니다.");
 
-        if (request.getEmail() == null || request.getEmail().trim().isEmpty())
+        if (request.email() == null || request.email().trim().isEmpty())
             throw new IllegalArgumentException("이메일은 필수입니다.");
 
-        if (request.getDepartmentId() == null)
+        if (request.departmentId() == null)
             throw new IllegalArgumentException("부서는 필수입니다.");
 
-        if (request.getPosition() == null || request.getPosition().trim().isEmpty())
+        if (request.position() == null || request.position().trim().isEmpty())
             throw new IllegalArgumentException("직급은 필수입니다.");
 
-        if (request.getHireDate() == null)
+        if (request.hireDate() == null)
             throw new IllegalArgumentException("입사일은 필수입니다.");
 
-        if (employeeRepository.existsByEmail(request.getEmail())) {
+        if (!request.email().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+        }
+
+        if (employeeRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("이미 등록된 이메일입니다.");
         }
 
-        Department department = departmentRepository.findById(request.getDepartmentId())
-            .orElseThrow(() -> new NoSuchElementException("존재하지 않는 부서입니다."));
+        Department department = departmentRepository.findById(request.departmentId())
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 부서입니다."));
 
         String generatedEmpNo = generateUniqueEmployeeNumber();
 
         Employee employee = Employee.builder()
-            .name(request.getName())
-            .email(request.getEmail())
+            .name(request.name())
+            .email(request.email())
             .department(department)
             .employeeNumber(generatedEmpNo)
-            .position(request.getPosition())
-            .hireDate(request.getHireDate())
-            .memo(request.getMemo())
+            .position(request.position())
+            .hireDate(request.hireDate())
+            .memo(request.memo())
             .status(EmployeeStatus.ACTIVE)
             .profile(null) // 실제 프로필 이미지는 별도 처리 필요
             .build();
@@ -91,22 +95,12 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeRepository.countByCondition(status, fromDate, toDate);
     }
 
-    private String generateUniqueEmployeeNumber() {
-        String year = String.valueOf(java.time.Year.now().getValue());
-        String prefix = "EMP-" + year + "-";
-        int maxSeq = employeeRepository.findAll().stream()
-            .filter(e -> e.getEmployeeNumber() != null && e.getEmployeeNumber().startsWith(prefix))
-            .map(e -> {
-                try {
-                    return Integer.parseInt(e.getEmployeeNumber().substring(prefix.length()));
-                } catch (Exception ex) {
-                    return 0;
-                }
-            })
-            .max(Integer::compareTo)
-            .orElse(0);
-        int nextSeq = maxSeq + 1;
-        return String.format("%s%03d", prefix, nextSeq);
-    }
+private String generateUniqueEmployeeNumber() {
+    String year = String.valueOf(java.time.Year.now().getValue());
+    String prefix = "EMP-" + year + "-";
+    int maxSeq = employeeRepository.findMaxSequenceByPrefix(prefix).orElse(0);
+    int nextSeq = maxSeq + 1;
+    return String.format("%s%03d", prefix, nextSeq);
+   }
 
 }
