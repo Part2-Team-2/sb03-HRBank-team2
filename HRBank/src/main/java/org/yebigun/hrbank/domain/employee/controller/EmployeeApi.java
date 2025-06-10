@@ -148,6 +148,6 @@ public interface EmployeeApi {
         )
     })
     ResponseEntity<CursorPageResponse<EmployeeDto>> findEmployees(
-        @Parameter(description = "직원 목록 조회를 위한 파라미터", required = true) EmployeeListRequest employeeListRequest
+        @Parameter(description = "직원 목록 조회를 위한 파라미터") EmployeeListRequest employeeListRequest
     );
 }
