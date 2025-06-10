@@ -169,21 +169,9 @@ public class EmployeeServiceImpl implements EmployeeService {
             nextCursor = null;
             nextIdAfter = null;
         }
-
-        // 추후 employeeMapper 구현 시 변경 예정
+        
         List<EmployeeDto> employeeDtos = employees.stream()
-            .map(employee -> new EmployeeDto(
-                employee.getId(),
-                employee.getName(),
-                employee.getEmail(),
-                employee.getEmployeeNumber(),
-                employee.getDepartment().getId(),
-                employee.getDepartment().getName(),
-                employee.getPosition(),
-                employee.getHireDate(),
-                employee.getStatus(),
-                employee.getProfile() != null ? employee.getProfile().getId() : null
-            ))
+            .map(employeeMapper::toDto)
             .toList();
 
         long totalElements = employeeRepository.countByRequest(nameOrEmail, employeeNumber, departmentName,
