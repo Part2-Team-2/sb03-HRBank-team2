@@ -14,11 +14,12 @@ import org.yebigun.hrbank.domain.department.repository.DepartmentRepository;
 @Profile("local")
 @Component
 @RequiredArgsConstructor
-public class DepartmentDataSeeder {
+public class DepartmentDataSeeder implements DataSeeder{
 
     private final DepartmentRepository departmentRepository;
 
-    @PostConstruct
+    @Override
+    @Transactional
     public void seed() {
         createDummyDepartments();
     }
@@ -29,7 +30,6 @@ public class DepartmentDataSeeder {
      * runtime에 자동으로 실행되는 구조입니다.
      */
 
-    @Transactional
     public void createDummyDepartments() {
         Map<String, Department> existingDepartments = departmentRepository.findAll().stream()
             .collect(Collectors.toMap(Department::getName, d -> d));

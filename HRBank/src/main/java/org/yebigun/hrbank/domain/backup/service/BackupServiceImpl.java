@@ -7,25 +7,24 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yebigun.hrbank.domain.backup.aop.SynchronizedExecution;
-import org.yebigun.hrbank.domain.backup.temporary.TempEmployeeDto;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
 import org.yebigun.hrbank.domain.backup.dto.CursorPageResponseBackupDto;
 import org.yebigun.hrbank.domain.backup.entity.Backup;
 import org.yebigun.hrbank.domain.backup.entity.BackupStatus;
 import org.yebigun.hrbank.domain.backup.mapper.BackupMapper;
 import org.yebigun.hrbank.domain.backup.repository.BackupRepository;
-import org.yebigun.hrbank.domain.backup.repository.BackupRepositoryCustom;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
-import org.yebigun.hrbank.domain.binaryContent.storage.BackupBinaryContentStorage;
+import org.yebigun.hrbank.domain.binaryContent.storage.BackupFileStorage;
+import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
+import org.yebigun.hrbank.domain.employee.mapper.EmployeeMapper;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 
+import java.net.InetAddress;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.backup.service
@@ -41,50 +40,41 @@ public class BackupServiceImpl implements BackupService {
     private static final String STARTED_AT = "startedAt";
     private static final String ENDED_AT = "endedAt";
 
-
     private final BackupRepository backupRepository;
     private final BackupMapper backupMapper;
-    private final BackupBinaryContentStorage binaryContentStorage;
+    private final BackupFileStorage binaryContentStorage;
     private final EmployeeRepository employeeRepository;
-    private final BackupRepositoryCustom backupRepositoryCustom;
+    private final EmployeeMapper employeeMapper;
 
+    @Override
+    public void createScheduledBackup() throws Exception {
+        String hostIp = InetAddress.getLocalHost().getHostAddress();
 
+        Backup.BackupBuilder backupBuilder = Backup.builder()
+            .startedAtFrom(Instant.now())
+            .employeeIp(hostIp);
 
+        processBackupIfRequired(backupBuilder);
+    }
 
     @SynchronizedExecution
     @Override
     public BackupDto createBackup(HttpServletRequest request) {
-
         Backup.BackupBuilder backupBuilder = Backup.builder()
             .startedAtFrom(Instant.now())
-//            .startedAtFrom(testOnlyFrom())
             .employeeIp(getIp(request));
 
-        // 변경 감지 : 가장 최근 완료된 배치 작업 시간 이후 직원 데이터가 변경된 경우 에 데이터 백업이 필요한 것으로 간주합니다.
-        if (!hasUpdate()) {
-            log.warn("변경사항 없음");
-            return processSkippedBackup(backupBuilder);
-        }
-
-        log.warn("변경사항 있음");
-        try {
-            log.warn("변경사항 저장");
-            return processCompletedBackup(backupBuilder);
-        } catch (Exception e) {
-            log.warn("변경사항 실패");
-            return processFailedBackup(backupBuilder, e);
-        }
+        return processBackupIfRequired(backupBuilder);
     }
 
-    // 삭제
-    private Instant testOnlyFrom() {
-        Instant endExclusive = Instant.now();
-        Instant startInclusive = endExclusive.minus(30, ChronoUnit.DAYS);
+    @Override
+    public BackupDto findLatest(BackupStatus backupStatus) {
+        Optional<Backup> backup = backupRepository.findTopByBackupStatusOrderByCreatedAtDesc(backupStatus);
+        if(backup.isPresent()) {
+            return backupMapper.toDto(backup.get());
+        }
 
-        long startMillis = startInclusive.toEpochMilli();
-        long endMillis = endExclusive.toEpochMilli();
-        long randomMillis = ThreadLocalRandom.current().nextLong(startMillis, endMillis);
-        return Instant.ofEpochMilli(randomMillis);
+        throw new IllegalArgumentException("유효하지 않은 상태값입니다.");
     }
 
     @Transactional(readOnly = true)
@@ -97,11 +87,11 @@ public class BackupServiceImpl implements BackupService {
         }
 
         // content
-        List<Backup> backups = backupRepositoryCustom.findAllByRequest(
+        List<Backup> backups = backupRepository.findAllByRequest(
             worker, status, startedAtFrom, startedAtTo, idAfter, cursor, size, sortField, sortDirection);
 
         // cursor
-        long totalElements = backupRepositoryCustom.countByRequest(worker, status, startedAtFrom, startedAtTo);
+        long totalElements = backupRepository.countByRequest(worker, status, startedAtFrom, startedAtTo);
         Instant nextCursor = null;
         long nextIdAfter = 0;
         boolean hasNext = backups.size() == size + 1;
@@ -132,7 +122,22 @@ public class BackupServiceImpl implements BackupService {
         return response;
     }
 
-    private boolean hasUpdate() {
+    private BackupDto processBackupIfRequired (Backup.BackupBuilder backupBuilder) {
+        if (!isBackupRequired()) {
+            log.info("변경사항 없음");
+            return processSkippedBackup(backupBuilder);
+        }
+        log.info("변경사항 있음");
+        try {
+            log.info("변경사항 저장");
+            return processCompletedBackup(backupBuilder);
+        } catch (Exception e) {
+            log.warn("변경사항 실패");
+            return processFailedBackup(backupBuilder, e);
+        }
+    }
+
+    private boolean isBackupRequired() {
         Optional<Instant> lastCreated = employeeRepository.findTopByOrderByCreatedAtDesc().map(Employee::getCreatedAt);
         Optional<Instant> lastUpdated = employeeRepository.findTopByOrderByUpdatedAtDesc().map(Employee::getUpdatedAt);
         Optional<Instant> lastBackedUp = backupRepository.findTopByOrderByCreatedAtDesc().map(Backup::getCreatedAt);
@@ -161,9 +166,9 @@ public class BackupServiceImpl implements BackupService {
     }
 
     private BackupDto processCompletedBackup(Backup.BackupBuilder backupBuilder) {
-        List<TempEmployeeDto> employees = toDto(employeeRepository.findAll());
+        List<EmployeeDto> employees = employeeRepository.findAll().stream().map(employeeMapper::toDto).collect(Collectors.toList());
 
-        BinaryContent csvFile = binaryContentStorage.writeCsv(employees); // 내부에서 삭제
+        BinaryContent csvFile = binaryContentStorage.saveCsv(employees); // 내부에서 삭제
         Backup backup = backupBuilder
             .backupStatus(BackupStatus.COMPLETED)
             .startedAtTo(Instant.now())
@@ -183,7 +188,7 @@ public class BackupServiceImpl implements BackupService {
         backup = backupRepository.save(backup);
 
         try {
-            BinaryContent logFile = binaryContentStorage.writeLog(backup.getId(), exception);
+            BinaryContent logFile = binaryContentStorage.saveLog(backup.getId(), exception);
             backup.addLogFile(logFile);
             return backupMapper.toDto(backup);
         } catch (Exception e) {
@@ -231,24 +236,4 @@ public class BackupServiceImpl implements BackupService {
             return false;
         }
     }
-
-    private List<TempEmployeeDto> toDto(List<Employee> employees) {
-        List<TempEmployeeDto> dtoList = new ArrayList<>();
-
-        for (Employee employee : employees) {
-            TempEmployeeDto employeeDto = TempEmployeeDto.builder()
-                .id(employee.getId())
-                .employeeNumber(employee.getEmployeeNumber())
-                .name(employee.getName())
-                .email(employee.getEmail())
-                .department(employee.getDepartment() != null ? employee.getDepartment() : null)
-                .position(employee.getPosition())
-                .hireDate(employee.getHireDate())
-                .status(employee.getStatus())
-                .build();
-            dtoList.add(employeeDto);
-        }
-        return dtoList;
-    }
-
 }

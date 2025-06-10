@@ -1,8 +1,6 @@
 package org.yebigun.hrbank.domain.backup.dto;
 
 import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
 import org.yebigun.hrbank.domain.backup.entity.BackupStatus;
 
 import java.time.Instant;
