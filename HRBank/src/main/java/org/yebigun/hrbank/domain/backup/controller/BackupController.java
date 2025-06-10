@@ -54,6 +54,12 @@ public class BackupController implements BackupApi {
     private final DepartmentRepository departmentRepository;
     boolean trigger = true;
 
+@GetMapping("/latest")
+public ResponseEntity<BackupDto> findLatest(@RequestParam(required = false, defaultValue = "COMPLETED") BackupStatus status) {
+    BackupDto latest = backupService.findLatest(status);
+    return ResponseEntity.status(HttpStatus.OK).body(latest);
+}
+
 
     @PostMapping
     public ResponseEntity<BackupDto> createBackup(HttpServletRequest request) {
@@ -97,7 +103,7 @@ public class BackupController implements BackupApi {
 //            Thread.currentThread().interrupt();
 //        }
 
-        return ResponseEntity.ok(backup);
+        return ResponseEntity.status(HttpStatus.OK).body(backup);
     }
 
     @GetMapping

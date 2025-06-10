@@ -7,14 +7,22 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
-import org.yebigun.hrbank.domain.employee.dto.request.EmployeeCreateRequest;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDistributionDto;
+import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeTrendDto;
+import org.yebigun.hrbank.domain.employee.dto.request.EmployeeCreateRequest;
+import org.yebigun.hrbank.domain.employee.dto.request.EmployeeListRequest;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.domain.employee.service.EmployeeService;
+import org.yebigun.hrbank.global.dto.CursorPageResponse;
 
 @RestController
 @RequiredArgsConstructor
@@ -68,4 +76,13 @@ public class EmployeeController implements EmployeeApi {
         return ResponseEntity.ok(created);
     }
 
+
+    @Override
+    @GetMapping
+    public ResponseEntity<CursorPageResponse<EmployeeDto>> findEmployees(
+        @ModelAttribute EmployeeListRequest employeeListRequest) {
+        CursorPageResponse<EmployeeDto> result = employeeService.findEmployees(employeeListRequest);
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
 }

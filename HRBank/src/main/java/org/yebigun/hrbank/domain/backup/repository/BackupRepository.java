@@ -2,6 +2,7 @@ package org.yebigun.hrbank.domain.backup.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.yebigun.hrbank.domain.backup.entity.Backup;
+import org.yebigun.hrbank.domain.backup.entity.BackupStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,4 +15,7 @@ import java.util.Optional;
  */
 public interface BackupRepository extends JpaRepository<Backup, Long> {
     Optional<Backup> findTopByOrderByCreatedAtDesc();
+
+    Optional<Backup> findTopByBackupStatusOrderByCreatedAtDesc(BackupStatus status);
+
 }
