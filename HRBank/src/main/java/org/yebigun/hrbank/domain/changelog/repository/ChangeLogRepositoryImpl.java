@@ -95,7 +95,16 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
             builder.and(changeLog.at.loe(condition.atTo()));
         }
         if (condition.idAfter() != null) {
-            builder.and(changeLog.id.lt(condition.idAfter()));
+            // 정렬 방향에 따른 연산 전환
+            boolean asc = "asc".equalsIgnoreCase(condition.sortDirection());
+
+            if (asc) {
+                // 오름차순 정렬
+                builder.and(changeLog.id.gt(condition.idAfter()));
+            } else {
+                // 내림차순 정렬
+                builder.and(changeLog.id.lt(condition.idAfter()));
+            }
         }
         return builder;
     }
