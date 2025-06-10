@@ -87,7 +87,7 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
             }
             else {// (ENDED_AT.equals(sortField))
                 if (sortDirection == Order.ASC) {
-                        cursorCondition.or(qBackup.startedAtTo.gt(cursor));
+                    cursorCondition.or(qBackup.startedAtTo.gt(cursor));
                     cursorCondition.or(qBackup.startedAtTo.eq(cursor).and(qBackup.id.gt(idAfter)));
                 } else {
                     cursorCondition.or(qBackup.startedAtTo.lt(cursor));

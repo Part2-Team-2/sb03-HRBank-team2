@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.yebigun.hrbank.domain.backup.service.BackupService;
 
 /**
@@ -19,11 +18,14 @@ import org.yebigun.hrbank.domain.backup.service.BackupService;
 public class HourlyBackupScheduler {
     private final BackupService backupService;
 
-    @Transactional
     @Scheduled(cron = "0 0 * * * *")
-    public void hourlyCreateBackup() throws Exception {
+    public void hourlyCreateBackup(){
         log.info("Starting hourly backup scheduler");
-        backupService.createScheduledBackup();
+        try{
+            backupService.createScheduledBackup();
+        } catch (Exception e) {
+            log.error("Hourly backup scheduler failed", e);
+        }
         log.info("Closing hourly backup scheduler");
     }
 }
