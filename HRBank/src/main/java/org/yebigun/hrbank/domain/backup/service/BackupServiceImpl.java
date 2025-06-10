@@ -49,7 +49,14 @@ public class BackupServiceImpl implements BackupService {
     private final BackupRepositoryCustom backupRepositoryCustom;
 
 
-
+    @Override
+    public BackupDto findLatest(BackupStatus backupStatus) {
+        Optional<Backup> backup = backupRepository.findTopByBackupStatusOrderByCreatedAtDesc(backupStatus);
+        if(backup.isPresent()) {
+            return backupMapper.toDto(backup.get());
+        }
+        throw new IllegalArgumentException("유효하지 않은 상태값입니다.");
+    }
 
     @SynchronizedExecution
     @Override
