@@ -2,7 +2,6 @@ package org.yebigun.hrbank.domain.backup.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.factory.Mappers;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
 import org.yebigun.hrbank.domain.backup.entity.Backup;
 import org.yebigun.hrbank.domain.binaryContent.mapper.BinaryContentMapper;
