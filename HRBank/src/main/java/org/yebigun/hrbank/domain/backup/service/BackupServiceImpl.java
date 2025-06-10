@@ -7,7 +7,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.yebigun.hrbank.domain.backup.aop.SynchronizedExecution;
-import org.yebigun.hrbank.domain.backup.temporary.TempEmployeeDto;
 import org.yebigun.hrbank.domain.backup.dto.BackupDto;
 import org.yebigun.hrbank.domain.backup.dto.CursorPageResponseBackupDto;
 import org.yebigun.hrbank.domain.backup.entity.Backup;
@@ -16,8 +15,10 @@ import org.yebigun.hrbank.domain.backup.mapper.BackupMapper;
 import org.yebigun.hrbank.domain.backup.repository.BackupRepository;
 import org.yebigun.hrbank.domain.backup.repository.BackupRepositoryCustom;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
-import org.yebigun.hrbank.domain.binaryContent.storage.BackupBinaryContentStorage;
+import org.yebigun.hrbank.domain.binaryContent.storage.BackupFileStorage;
+import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
+import org.yebigun.hrbank.domain.employee.mapper.EmployeeMapper;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 
 import java.time.Instant;
@@ -44,9 +45,10 @@ public class BackupServiceImpl implements BackupService {
 
     private final BackupRepository backupRepository;
     private final BackupMapper backupMapper;
-    private final BackupBinaryContentStorage binaryContentStorage;
+    private final BackupFileStorage binaryContentStorage;
     private final EmployeeRepository employeeRepository;
     private final BackupRepositoryCustom backupRepositoryCustom;
+    private final EmployeeMapper employeeMapper;
 
 
 
@@ -161,9 +163,9 @@ public class BackupServiceImpl implements BackupService {
     }
 
     private BackupDto processCompletedBackup(Backup.BackupBuilder backupBuilder) {
-        List<TempEmployeeDto> employees = toDto(employeeRepository.findAll());
+        List<EmployeeDto> employees = toDtos(employeeRepository.findAll());
 
-        BinaryContent csvFile = binaryContentStorage.writeCsv(employees); // 내부에서 삭제
+        BinaryContent csvFile = binaryContentStorage.saveCsv(employees); // 내부에서 삭제
         Backup backup = backupBuilder
             .backupStatus(BackupStatus.COMPLETED)
             .startedAtTo(Instant.now())
@@ -183,7 +185,7 @@ public class BackupServiceImpl implements BackupService {
         backup = backupRepository.save(backup);
 
         try {
-            BinaryContent logFile = binaryContentStorage.writeLog(backup.getId(), exception);
+            BinaryContent logFile = binaryContentStorage.saveLog(backup.getId(), exception);
             backup.addLogFile(logFile);
             return backupMapper.toDto(backup);
         } catch (Exception e) {
@@ -232,21 +234,12 @@ public class BackupServiceImpl implements BackupService {
         }
     }
 
-    private List<TempEmployeeDto> toDto(List<Employee> employees) {
-        List<TempEmployeeDto> dtoList = new ArrayList<>();
+    private List<EmployeeDto> toDtos(List<Employee> employees) {
+        List<EmployeeDto> dtoList = new ArrayList<>();
 
         for (Employee employee : employees) {
-            TempEmployeeDto employeeDto = TempEmployeeDto.builder()
-                .id(employee.getId())
-                .employeeNumber(employee.getEmployeeNumber())
-                .name(employee.getName())
-                .email(employee.getEmail())
-                .department(employee.getDepartment() != null ? employee.getDepartment() : null)
-                .position(employee.getPosition())
-                .hireDate(employee.getHireDate())
-                .status(employee.getStatus())
-                .build();
-            dtoList.add(employeeDto);
+            EmployeeDto dto = employeeMapper.toDto(employee);
+            dtoList.add(dto);
         }
         return dtoList;
     }
