@@ -48,9 +48,7 @@ public class BackupRepositoryImpl implements BackupRepositoryCustom {
             .from(qBackup)
             .where(where)
             .fetchOne();
-
         return totalElements == null ? 0 : totalElements;
-
     }
 
     @Override

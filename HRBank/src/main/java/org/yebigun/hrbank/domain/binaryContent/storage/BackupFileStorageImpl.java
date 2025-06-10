@@ -47,7 +47,6 @@ public class BackupFileStorageImpl implements BackupFileStorage {
     @Value("${file.upload.all.path}")
     private String path;
 
-
     @PostConstruct
     public void init() {
         try {
@@ -65,9 +64,7 @@ public class BackupFileStorageImpl implements BackupFileStorage {
         }
     }
 
-
     @Override
-//    public BinaryContent putCsv(List<Employee> employees) {
     public BinaryContent saveCsv(List<EmployeeDto> employees) {
         UUID fileName = UUID.randomUUID();
         Path filePath = root.resolve(fileName + CSV_EXTENSION);
@@ -78,7 +75,6 @@ public class BackupFileStorageImpl implements BackupFileStorage {
             bw.newLine();
 
             if(employees != null && !employees.isEmpty()) {
-//                for (Employee employee : employees) {
                 for (EmployeeDto employee : employees) {
                     log.warn("내부 반복");
                     try {
