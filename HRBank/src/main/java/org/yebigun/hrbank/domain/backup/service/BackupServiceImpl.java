@@ -20,6 +20,7 @@ import org.yebigun.hrbank.domain.binaryContent.storage.BackupBinaryContentStorag
 import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 
+import java.net.InetAddress;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -49,6 +50,18 @@ public class BackupServiceImpl implements BackupService {
     private final BackupRepositoryCustom backupRepositoryCustom;
 
 
+
+    @Override
+    public void createScheduledBackup() throws Exception {
+        String hostIp = InetAddress.getLocalHost().getHostAddress();
+
+        Backup.BackupBuilder backupBuilder = Backup.builder()
+            .startedAtFrom(Instant.now())
+            .employeeIp(hostIp);
+
+        // 변경 감지 : 가장 최근 완료된 배치 작업 시간 이후 직원 데이터가 변경된 경우 에 데이터 백업이 필요한 것으로 간주합니다.
+        processBackupIfRequired(backupBuilder);
+
     @Override
     public BackupDto findLatest(BackupStatus backupStatus) {
         Optional<Backup> backup = backupRepository.findTopByBackupStatusOrderByCreatedAtDesc(backupStatus);
@@ -56,6 +69,7 @@ public class BackupServiceImpl implements BackupService {
             return backupMapper.toDto(backup.get());
         }
         throw new IllegalArgumentException("유효하지 않은 상태값입니다.");
+
     }
 
     @SynchronizedExecution
@@ -68,30 +82,7 @@ public class BackupServiceImpl implements BackupService {
             .employeeIp(getIp(request));
 
         // 변경 감지 : 가장 최근 완료된 배치 작업 시간 이후 직원 데이터가 변경된 경우 에 데이터 백업이 필요한 것으로 간주합니다.
-        if (!hasUpdate()) {
-            log.warn("변경사항 없음");
-            return processSkippedBackup(backupBuilder);
-        }
-
-        log.warn("변경사항 있음");
-        try {
-            log.warn("변경사항 저장");
-            return processCompletedBackup(backupBuilder);
-        } catch (Exception e) {
-            log.warn("변경사항 실패");
-            return processFailedBackup(backupBuilder, e);
-        }
-    }
-
-    // 삭제
-    private Instant testOnlyFrom() {
-        Instant endExclusive = Instant.now();
-        Instant startInclusive = endExclusive.minus(30, ChronoUnit.DAYS);
-
-        long startMillis = startInclusive.toEpochMilli();
-        long endMillis = endExclusive.toEpochMilli();
-        long randomMillis = ThreadLocalRandom.current().nextLong(startMillis, endMillis);
-        return Instant.ofEpochMilli(randomMillis);
+        return processBackupIfRequired(backupBuilder);
     }
 
     @Transactional(readOnly = true)
@@ -139,7 +130,22 @@ public class BackupServiceImpl implements BackupService {
         return response;
     }
 
-    private boolean hasUpdate() {
+    private BackupDto processBackupIfRequired (Backup.BackupBuilder backupBuilder) {
+        if (!isBackupRequired()) {
+            log.info("변경사항 없음");
+            return processSkippedBackup(backupBuilder);
+        }
+        log.info("변경사항 있음");
+        try {
+            log.info("변경사항 저장");
+            return processCompletedBackup(backupBuilder);
+        } catch (Exception e) {
+            log.warn("변경사항 실패");
+            return processFailedBackup(backupBuilder, e);
+        }
+    }
+
+    private boolean isBackupRequired() {
         Optional<Instant> lastCreated = employeeRepository.findTopByOrderByCreatedAtDesc().map(Employee::getCreatedAt);
         Optional<Instant> lastUpdated = employeeRepository.findTopByOrderByUpdatedAtDesc().map(Employee::getUpdatedAt);
         Optional<Instant> lastBackedUp = backupRepository.findTopByOrderByCreatedAtDesc().map(Backup::getCreatedAt);
@@ -256,6 +262,17 @@ public class BackupServiceImpl implements BackupService {
             dtoList.add(employeeDto);
         }
         return dtoList;
+    }
+
+    // 삭제
+    private Instant testOnlyFrom() {
+        Instant endExclusive = Instant.now();
+        Instant startInclusive = endExclusive.minus(30, ChronoUnit.DAYS);
+
+        long startMillis = startInclusive.toEpochMilli();
+        long endMillis = endExclusive.toEpochMilli();
+        long randomMillis = ThreadLocalRandom.current().nextLong(startMillis, endMillis);
+        return Instant.ofEpochMilli(randomMillis);
     }
 
 }
