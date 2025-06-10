@@ -11,7 +11,12 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
 
     int countByDepartmentId(Long departmentId);
 
+    boolean existsByEmail(String email);
+
+    boolean existsByEmployeeNumber(String employeeNumber);
+
     Optional<Employee> findTopByOrderByCreatedAtDesc();
 
     Optional<Employee> findTopByOrderByUpdatedAtDesc();
 }
+
