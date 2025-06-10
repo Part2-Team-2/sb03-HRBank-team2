@@ -158,5 +158,55 @@ public interface ChangeLogApi {
         @Parameter(description = "이력 ID", required = true) Long id
     );
 
-    
+    @Operation(
+        summary = "수정 이력 건수 조회",
+        description = "직원 정보 수정 이력 건수를 조회합니다. 파라미터를 제공하지 않으면 최근 일주일 데이터를 반환합니다."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description = "조회 성공",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = Long.class),
+                examples = @ExampleObject(value = "9007199254740991")
+            )
+        ),
+        @ApiResponse(
+            responseCode = "400",
+            description = "잘못된 요청 또는 유효하지 않은 날짜 범위",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                {
+                    "timestamp": "2025-03-06T05:39:06.152078Z",
+                    "status": 400,
+                    "message": "잘못된 요청입니다.",
+                    "details": "날짜 범위가 올바르지 않습니다."
+                }
+                """)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description = "서버 오류",
+            content = @Content(
+                mediaType = "*/*",
+                schema = @Schema(implementation = ErrorResponse.class),
+                examples = @ExampleObject(value = """
+                {
+                    "timestamp": "2025-03-06T05:39:06.152068Z",
+                    "status": 500,
+                    "message": "서버 오류가 발생했습니다.",
+                    "details": "내부 서버 오류"
+                }
+                """)
+            )
+        )
+    })
+    ResponseEntity<Long> getChangeLogCount(
+        @Parameter(description = "시작 일시 ( 기본값: 7일 전 )") Instant fromDate,
+        @Parameter(description = "종료 일시 ( 기본값: 현재 )") Instant toDate
+    );
 }
