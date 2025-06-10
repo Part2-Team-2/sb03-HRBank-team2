@@ -162,7 +162,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             nextCursor = null;
             nextIdAfter = null;
         }
-        
+
         List<EmployeeDto> employeeDtos = employees.stream()
             .map(employeeMapper::toDto)
             .toList();
