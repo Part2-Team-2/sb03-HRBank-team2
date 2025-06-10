@@ -25,8 +25,7 @@ public interface ChangeLogApi {
         description = "직원 정보 수정 이력 목록을 조회합니다. 상세 변경 내용은 포함되지 않습니다."
     )
     @ApiResponses({
-        @ApiResponse(
-            responseCode = "200",
+        @ApiResponse(responseCode = "200",
             description = "조회 성공",
             content = @Content(
                 mediaType = "application/json",
@@ -94,7 +93,7 @@ public interface ChangeLogApi {
         @Parameter(description = "수정 일시( 까지 )")Instant atTo,
         @Parameter(description = "이전 페이지 마지막 요소 ID") Long idAfter,
         @Parameter(description = "커서 ( 이전 페이지의 마지막 ID )") String cursor,
-        @Parameter(description = "페이지 크기 ( 기본값: 10 )") Integer size,
+        @Parameter(description = "페이지 크기 ( 기본값: 10 )") int size,
         @Parameter(description = "정렬 필드 ( ipAddress, at ) 기본값 : at") String sortField,
         @Parameter(description = "정렬 필드 ( asc, desc ) 기본값 : desc") String sortDirection
     );

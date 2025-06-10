@@ -26,11 +26,12 @@ import org.yebigun.hrbank.domain.changelog.service.ChangeLogService;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/change-logs")
-public class ChangeLogController {
+public class ChangeLogController implements ChangeLogApi {
 
     private final ChangeLogService changeLogService;
 
     // 이력 목록 조회
+    @Override
     @GetMapping
     public ResponseEntity<CursorPageResponseChangeLogDto> getChangeLogs(
         @RequestParam(required = false) String employeeNumber,
@@ -55,12 +56,14 @@ public class ChangeLogController {
     }
 
     // 변경 상세 이력 조회
+    @Override
     @GetMapping("/{id}/diffs")
     public ResponseEntity<List<DiffDto>> getChangeLogDiffs(@PathVariable(name = "id") Long id) {
         return ResponseEntity.ok(changeLogService.getChangeLogDiffs(id));
     }
 
     // 이력 건수 조회
+    @Override
     @GetMapping("/count")
     public ResponseEntity<Long> getChangeLogCount(
         @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE_TIME) Instant fromDate,
