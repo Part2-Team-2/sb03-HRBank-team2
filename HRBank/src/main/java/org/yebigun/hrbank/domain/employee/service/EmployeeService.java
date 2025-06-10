@@ -12,10 +12,12 @@ import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 public interface EmployeeService {
 
     List<EmployeeTrendDto> getEmployeeTrend(LocalDate from, LocalDate to, String unit);
+
     List<EmployeeDistributionDto> getEmployeeDistribution(String groupBy, EmployeeStatus status);
 
     Long getEmployeeCount(EmployeeStatus status, LocalDate fromDate, LocalDate toDate);
 
     EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profile);
 
+    EmployeeDto getEmployeeById(Long id);
 }
