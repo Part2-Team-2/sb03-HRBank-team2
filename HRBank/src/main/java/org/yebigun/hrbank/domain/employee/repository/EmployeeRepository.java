@@ -18,5 +18,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
     Optional<Employee> findTopByOrderByCreatedAtDesc();
 
     Optional<Employee> findTopByOrderByUpdatedAtDesc();
+
 }
 
