@@ -30,21 +30,61 @@ public class ChangeLogServiceImpl implements ChangeLogService {
 
     @Override
     public void createRecord(Employee afterValue, String memo, String ipAddress) {
-        recordChangeLog(null, afterValue, resolveMemo(memo, ChangeType.CREATED), ipAddress, ChangeType.CREATED);
+        handleRecord(null, afterValue, memo, ipAddress, ChangeType.CREATED);
     }
 
     @Override
     public void updateRecord(Employee beforeValue, Employee afterValue, String memo, String ipAddress) {
-        recordChangeLog(beforeValue, afterValue, resolveMemo(memo, ChangeType.UPDATED), ipAddress, ChangeType.UPDATED);
+        handleRecord(beforeValue, afterValue, memo, ipAddress, ChangeType.UPDATED);
     }
 
     @Override
     public void deleteRecord(Employee beforeValue, String ipAddress) {
-        recordChangeLog(beforeValue, null, resolveMemo(null, ChangeType.DELETED), ipAddress, ChangeType.DELETED);
+        handleRecord(beforeValue, null, null, ipAddress, ChangeType.DELETED);
     }
 
     @Override
-    public void recordChangeLog(Employee beforeValue, Employee afterValue, String memo, String ipAddress, ChangeType changeType) {
+    public CursorPageResponseChangeLogDto getChangeLogs(ChangeLogSearchCondition condition) {
+        return changeLogRepository.searchChangeLogs(condition);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DiffDto> getChangeLogDiffs(Long changeLogId) {
+        ChangeLog changeLog = changeLogRepository.findById(changeLogId)
+            .orElseThrow(() -> new EntityNotFoundException("변경 이력을 찾을 수 없습니다"));
+
+        return changeLog.getDiffs().stream()
+            .map(diff -> new DiffDto(diff.getPropertyName(), diff.getBefore(), diff.getAfter()))
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    public long countAllChangeLogs(Instant from, Instant to) {
+        return changeLogRepository.countByAtBetween(from, to);
+    }
+
+
+    private void handleRecord(Employee beforeValue, Employee afterValue, String memo, String ipAddress, ChangeType type) {
+        String effectiveMemo = resolveMemo(memo, type);
+        recordChangeLog(beforeValue, afterValue, effectiveMemo, ipAddress, type);
+    }
+
+    // 메모 기본 값 보정
+    private String resolveMemo(String memo, ChangeType changeType) {
+        if (memo != null && !memo.isBlank()) {
+            return memo;
+        }
+
+        return switch (changeType) {
+            case CREATED -> "신규 직원 등록";
+            case UPDATED -> "직원 정보 수정";
+            case DELETED -> "직원 삭제";
+        };
+    }
+
+    // 이력 필드 저장
+    private void recordChangeLog(Employee beforeValue, Employee afterValue, String memo, String ipAddress, ChangeType changeType) {
 
         if (changeType == null) {
             throw new IllegalArgumentException("changeType은 필수입니다");
@@ -57,9 +97,6 @@ public class ChangeLogServiceImpl implements ChangeLogService {
         if ((changeType == ChangeType.UPDATED || changeType == ChangeType.DELETED) && beforeValue == null) {
             throw new IllegalArgumentException("UPDATED/DELETED 타입에서는 beforeValue가 필수입니다");
         }
-
-        // memo 기본값 보정
-        String effectiveMemo = resolveMemo(memo, changeType);
 
         List<ChangeLogDiff> diffs = new ArrayList<>();
 
@@ -113,14 +150,13 @@ public class ChangeLogServiceImpl implements ChangeLogService {
                 break;
         }
 
-
         // 직원 이력 저장
         if (!diffs.isEmpty()) {
             ChangeLog changeLog = ChangeLog.builder()
                 .type(changeType)
                 // CREATED 시 afterValue 사용, UPDATED & DELETED 시 beforeValue 사용
                 .employeeNumber(changeType ==  ChangeType.CREATED ? afterValue.getEmployeeNumber() : beforeValue.getEmployeeNumber())
-                .memo(effectiveMemo)
+                .memo(memo)
                 .ipAddress(ipAddress)
                 .at(Instant.now())
                 .build();
@@ -134,27 +170,6 @@ public class ChangeLogServiceImpl implements ChangeLogService {
         }
     }
 
-    @Override
-    public CursorPageResponseChangeLogDto getChangeLogs(ChangeLogSearchCondition condition) {
-        return changeLogRepository.searchChangeLogs(condition);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<DiffDto> getChangeLogDiffs(Long changeLogId) {
-        ChangeLog changeLog = changeLogRepository.findById(changeLogId)
-            .orElseThrow(() -> new EntityNotFoundException("변경 이력을 찾을 수 없습니다"));
-
-        return changeLog.getDiffs().stream()
-            .map(diff -> new DiffDto(diff.getPropertyName(), diff.getBefore(), diff.getAfter()))
-            .collect(Collectors.toList());
-    }
-
-    @Override
-    public long countAllChangeLogs(Instant from, Instant to) {
-        return changeLogRepository.countByAtBetween(from, to);
-    }
-
     // 변경 상세 내용 필드 구성
     private ChangeLogDiff createDiff(PropertyName property, String beforeValue, String afterValue) {
         return ChangeLogDiff.builder()
@@ -162,18 +177,5 @@ public class ChangeLogServiceImpl implements ChangeLogService {
             .before(beforeValue)
             .after(afterValue)
             .build();
-    }
-
-    // 메모 기본 값 보정
-    private String resolveMemo(String memo, ChangeType changeType) {
-        if (memo != null && !memo.isBlank()) {
-            return memo;
-        }
-
-        return switch (changeType) {
-            case CREATED -> "신규 직원 등록";
-            case UPDATED -> "직원 정보 수정";
-            case DELETED -> "직원 삭제";
-        };
     }
 }

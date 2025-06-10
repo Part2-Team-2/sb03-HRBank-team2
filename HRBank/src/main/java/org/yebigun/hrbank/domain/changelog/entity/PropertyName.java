@@ -2,7 +2,7 @@ package org.yebigun.hrbank.domain.changelog.entity;
 
 import lombok.Getter;
 
-// 
+// 이력 필드명 관리
 @Getter
 public enum PropertyName {
     NAME("이름"),
@@ -15,9 +15,9 @@ public enum PropertyName {
 
     private final String label;
 
+    // 다국어 처리
     PropertyName(String label) {
         this.label = label;
     }
-
 
 }
