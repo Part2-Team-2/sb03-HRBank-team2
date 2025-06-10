@@ -5,6 +5,8 @@ import java.time.Year;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
+
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -211,5 +213,13 @@ public class EmployeeServiceImpl implements EmployeeService {
         };
 
         return fromDate;
+    }
+
+    @Override
+    @Transactional
+    public void deleteEmployee(Long employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+            .orElseThrow(() -> new EntityNotFoundException("직원을 찾을 수 없습니다."));
+        employeeRepository.delete(employee);
     }
 }

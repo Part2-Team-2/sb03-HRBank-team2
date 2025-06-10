@@ -15,6 +15,8 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
 
     boolean existsByEmployeeNumber(String employeeNumber);
 
+    boolean existsById(Long id);
+
     Optional<Employee> findTopByOrderByCreatedAtDesc();
 
     Optional<Employee> findTopByOrderByUpdatedAtDesc();

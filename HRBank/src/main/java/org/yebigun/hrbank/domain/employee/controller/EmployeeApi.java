@@ -13,6 +13,8 @@ import java.time.LocalDate;
 import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
@@ -209,4 +211,35 @@ public interface EmployeeApi {
         @RequestPart(value = "profile", required = false)
         MultipartFile profile
     );
+    @Operation(
+        summary = "직원 삭제"
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "204",
+            description  = "삭제 성공",
+            content      = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema    = @Schema(implementation = EmployeeDto.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description  = "직원을 찾을 수 없음",
+            content      = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema    = @Schema(implementation = EmployeeDto.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description  = "서버 오류",
+            content      = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema    = @Schema(implementation = EmployeeDto.class)
+            )
+        )
+    })
+    @DeleteMapping("/{id}")
+    ResponseEntity<Void> deleteEmployee(@PathVariable Long id);
 }
