@@ -19,7 +19,7 @@ public class DepartmentDataSeeder {
     private final DepartmentRepository departmentRepository;
 
     @PostConstruct
-    public void init() {
+    public void seed() {
         createDummyDepartments();
     }
 
