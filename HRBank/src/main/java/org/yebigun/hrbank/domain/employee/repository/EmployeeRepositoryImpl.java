@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.yebigun.hrbank.domain.department.dto.data.DepartmentEmployeeCount;
 import org.yebigun.hrbank.domain.department.entity.QDepartment;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDistributionDto;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
@@ -291,9 +292,5 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
         }
 
         return builder;
-    }
-
-    public static record DepartmentEmployeeCount(Long departmentId, Long employeeCount) {
-
     }
 }
