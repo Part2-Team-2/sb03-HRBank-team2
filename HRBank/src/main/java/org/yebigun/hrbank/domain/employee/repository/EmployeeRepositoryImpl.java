@@ -157,7 +157,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
 
             switch (sortField) {
                 case "name":
-                    if (sortDirection.equalsIgnoreCase("ASC")) {
+                    if (sortDirection.equalsIgnoreCase("asc")) {
                         builder.and(e.name.gt((String) cursorValue));
                     } else {
                         builder.and(e.name.lt((String) cursorValue));
@@ -165,7 +165,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
                     break;
 
                 case "hireDate":
-                    if (sortDirection.equalsIgnoreCase("ASC")) {
+                    if (sortDirection.equalsIgnoreCase("asc")) {
                         builder.and(e.hireDate.gt((LocalDate) cursorValue));
                     } else {
                         builder.and(e.hireDate.lt((LocalDate) cursorValue));
@@ -194,7 +194,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
         }
 
 
-        OrderSpecifier<?> orderSpecifier = getOrderSpecifier(e, sortField, sortDirection);
+        OrderSpecifier<?> orderSpecifier = getOrderSpecifier(sortField, sortDirection);
 
         List<Employee> employees = queryFactory
             .selectFrom(e)
@@ -258,7 +258,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
         };
     }
 
-    private OrderSpecifier<?> getOrderSpecifier(QEmployee e, String sortField, String sortDirection) {
+    private OrderSpecifier<?> getOrderSpecifier(String sortField, String sortDirection) {
         Order order = sortDirection.equalsIgnoreCase("asc") ? Order.ASC : Order.DESC;
 
         return switch (sortField) {
