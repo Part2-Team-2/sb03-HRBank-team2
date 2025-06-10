@@ -14,6 +14,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.department.entity.Department;
 import org.yebigun.hrbank.global.base.BaseUpdatableEntity;
@@ -37,7 +38,7 @@ public class Employee extends BaseUpdatableEntity {
     @JoinColumn(name = "department_id")
     private Department department;
 
-    @Column(name = "emp_no", nullable = false)
+    @Column(name = "emp_no", nullable = false, unique = true)
     private String employeeNumber;
 
     @Column(nullable = false)
@@ -51,6 +52,7 @@ public class Employee extends BaseUpdatableEntity {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
+    @ColumnDefault("'ACTIVE'")
     private EmployeeStatus status;
 
     @OneToOne
