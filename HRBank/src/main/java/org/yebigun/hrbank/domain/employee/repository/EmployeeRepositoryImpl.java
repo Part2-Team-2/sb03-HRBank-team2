@@ -66,13 +66,13 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
         }
 
         List<EmployeeTrendDto> trend = new ArrayList<>();
-        long prevCount = 0;
+        long prevCount = 0L;
 
         for (LocalDate date : datePoints) {
             Map.Entry<LocalDate, Long> floor = cumulativeCounts.floorEntry(date);
-            long count = floor != null ? floor.getValue() : 0;
+            Long count = floor != null ? floor.getValue() : 0;
 
-            long change = 0;
+            long change = 0L;
             double changeRate = 0.0;
 
             if (prevCount != 0) {
@@ -261,7 +261,8 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
         };
     }
 
-    private BooleanBuilder getBuilder(String nameOrEmail, String employeeNumber, String departmentName,
+    private BooleanBuilder getBuilder(String nameOrEmail, String employeeNumber,
+        String departmentName,
         String position, LocalDate hireDateFrom, LocalDate hireDateTo, EmployeeStatus status) {
         BooleanBuilder builder = new BooleanBuilder();
 
