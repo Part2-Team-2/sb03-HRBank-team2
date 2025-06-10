@@ -219,7 +219,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     @Transactional(readOnly = true)
     public EmployeeDto getEmployeeById(Long id) {
-        var employee = employeeRepository.findById(id)
+        Employee employee = employeeRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("직원을 찾을 수 없습니다."));
         return employeeMapper.toDto(employee);
     }
