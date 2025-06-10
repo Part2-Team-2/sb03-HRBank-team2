@@ -63,7 +63,7 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
             nextCursor,       // 커서 인코딩 값
             nextId,           // 다음 요청용 ID
             condition.size(), // 요청한 페이지 크기
-            result.size(),    // 실제 전체 fetch된 row 수
+            pageContent.size(),    // 현재 페이지에 실제 포함된 데이터 수
             hasNext           // 다음 페이지 여부
         );
     }

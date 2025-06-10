@@ -47,7 +47,7 @@ public interface ChangeLogApi {
                 "nextIdAfter": 20,
                 "size": 10,
                 "totalElements": 100,
-                "hasNext": ture
+                "hasNext": true
                 }
                 """)
             )
