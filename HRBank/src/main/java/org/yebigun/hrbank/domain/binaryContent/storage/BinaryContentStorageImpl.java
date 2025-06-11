@@ -147,4 +147,20 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         }
         return fileName.substring(index).toLowerCase();
     }
+
+    @Override
+    public void delete(Long binaryContentId) {
+        BinaryContent binaryContent = binaryContentRepository.findById(binaryContentId)
+            .orElseThrow(() -> new NoSuchElementException("파일을 찾을 수 없습니다."));
+
+        String extension = getExtension(binaryContent.getFileName());
+        Path pathToDelete = resolvePathForRead(binaryContent, extension);
+
+        try {
+            Files.deleteIfExists(pathToDelete);
+        } catch (IOException e) {
+            throw new RuntimeException("파일 삭제 실패", e);
+        }
+    }
+
 }
