@@ -1,12 +1,17 @@
 package org.yebigun.hrbank.domain.changelog.service;
 
+import jakarta.persistence.EntityNotFoundException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogSearchCondition;
+import org.yebigun.hrbank.domain.changelog.dto.data.DiffDto;
+import org.yebigun.hrbank.domain.changelog.dto.response.CursorPageResponseChangeLogDto;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeLog;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeLogDiff;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeType;
@@ -73,10 +78,6 @@ public class ChangeLogServiceImpl implements ChangeLogService {
                     diffs.add(createDiff("입사일", beforeValue.getHireDate().toString(), afterValue.getHireDate().toString()));
                 }
 
-                if (!Objects.equals(beforeValue.getEmployeeNumber(), afterValue.getEmployeeNumber())) {
-                    diffs.add(createDiff("사번", beforeValue.getEmployeeNumber(), afterValue.getEmployeeNumber()));
-                }
-
                 if (!Objects.equals(beforeValue.getStatus(), afterValue.getStatus())) {
                     diffs.add(createDiff("상태", beforeValue.getStatus().name(), afterValue.getStatus().name()));
                 }
@@ -89,7 +90,6 @@ public class ChangeLogServiceImpl implements ChangeLogService {
                 diffs.add(createDiff("부서명", beforeValue.getDepartment() != null ? beforeValue.getDepartment().getName() : null, null));
                 diffs.add(createDiff("직함", beforeValue.getPosition(), null));
                 diffs.add(createDiff("입사일", beforeValue.getHireDate().toString(), null));
-                diffs.add(createDiff("사번", beforeValue.getEmployeeNumber(), null));
                 diffs.add(createDiff("상태", beforeValue.getStatus() != null ? beforeValue.getStatus().name() : null, null));
                 break;
         }
@@ -109,12 +109,26 @@ public class ChangeLogServiceImpl implements ChangeLogService {
             changeLogRepository.save(changeLog);
 
             for(ChangeLogDiff diff : diffs) {
-                changeLogDiffRepository.save(
-                    diff.toBuilder()
-                        .changeLog(changeLog)
-                        .build());
+                diff.update(changeLog);
+                changeLogDiffRepository.save(diff);
             }
         }
+    }
+
+    @Override
+    public CursorPageResponseChangeLogDto getChangeLogs(ChangeLogSearchCondition condition) {
+        return changeLogRepository.searchChangeLogs(condition);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<DiffDto> getChangeLogDiffs(Long changeLogId) {
+        ChangeLog changeLog = changeLogRepository.findById(changeLogId)
+            .orElseThrow(() -> new EntityNotFoundException("변경 이력을 찾을 수 없습니다"));
+
+        return  changeLog.getDiffs().stream()
+            .map(diff -> new DiffDto(diff.getPropertyName(), diff.getBefore(), diff.getAfter()))
+            .collect(Collectors.toList());
     }
 
     // 변경 상세 내용 필드 구성
