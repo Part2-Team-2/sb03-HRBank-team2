@@ -96,6 +96,9 @@ public class EmployeeController implements EmployeeApi {
         @RequestPart("employee") EmployeeUpdateRequest request,
         @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
+        System.out.println("profile exist? " + (profile != null) + ", empty? " + (profile != null ? profile.isEmpty() : "N/A"));
+        System.out.println("컨트롤러 진입: PATCH /api/employees/" + employeeId);
+
         EmployeeDto updated = employeeService.updateEmployee(employeeId, request, profile);
         return ResponseEntity.ok(updated);
     }

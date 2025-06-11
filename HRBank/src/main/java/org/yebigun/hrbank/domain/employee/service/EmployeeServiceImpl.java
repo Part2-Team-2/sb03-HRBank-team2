@@ -243,6 +243,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Transactional
     public EmployeeDto updateEmployee(Long employeeId, EmployeeUpdateRequest request, MultipartFile profile) {
+        System.out.println("서비스 진입: updateEmployee, id=" + employeeId);
+
         Employee employee = employeeRepository.findById(employeeId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 직원입니다."));
 
