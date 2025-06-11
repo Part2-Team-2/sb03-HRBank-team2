@@ -3,7 +3,6 @@ package org.yebigun.hrbank.domain.employee.service;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,13 +28,8 @@ import org.yebigun.hrbank.domain.employee.exception.UnsupportedUnitException;
 import org.yebigun.hrbank.domain.employee.mapper.EmployeeMapper;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 import org.yebigun.hrbank.global.dto.CursorPageResponse;
-import java.io.IOException;
-import java.time.LocalDate;
-import java.time.Year;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.Year;
 import java.util.List;
@@ -266,9 +260,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         if (profile != null && !profile.isEmpty()) {
             if (employee.getProfile() != null) {
                 Long oldProfileId = employee.getProfile().getId();
+                // 2-1) 스토리지(로컬)에서 실제 파일 삭제
                 binaryContentStorage.delete(oldProfileId);
+                // 2-2) DB 메타 삭제
                 binaryContentRepository.deleteById(oldProfileId);
-
             }
 
             BinaryContent meta = BinaryContent.builder()
@@ -293,10 +288,21 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Override
     @Transactional
     public void deleteEmployee(Long employeeId) {
+        // 1) 직원 조회 (없으면 404)
         Employee employee = employeeRepository.findById(employeeId)
-            .orElseThrow(() -> new EntityNotFoundException("직원을 찾을 수 없습니다."));
+            .orElseThrow(() -> new EntityNotFoundException("직원을 찾을 수 없습니다. id=" + employeeId));
+        
+        if (employee.getProfile() != null) {
+            Long oldProfileId = employee.getProfile().getId();
+            // 2-1) 스토리지(로컬)에서 실제 파일 삭제
+            binaryContentStorage.delete(oldProfileId);
+            // 2-2) DB 메타 삭제
+            binaryContentRepository.deleteById(oldProfileId);
+        }
+
         employeeRepository.delete(employee);
     }
+
     @Transactional(readOnly = true)
     public EmployeeDto getEmployeeById(Long id) {
         Employee employee = employeeRepository.findById(id)

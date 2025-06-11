@@ -1,7 +1,5 @@
 package org.yebigun.hrbank.domain.employee.controller;
 
-import java.time.LocalDate;
-import java.util.List;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -18,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDistributionDto;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
@@ -117,8 +114,6 @@ public class EmployeeController implements EmployeeApi {
         @RequestPart("employee") EmployeeUpdateRequest request,
         @RequestPart(value = "profile", required = false) MultipartFile profile
     ) {
-        System.out.println("profile exist? " + (profile != null) + ", empty? " + (profile != null ? profile.isEmpty() : "N/A"));
-        System.out.println("컨트롤러 진입: PATCH /api/employees/" + employeeId);
 
         EmployeeDto updated = employeeService.updateEmployee(employeeId, request, profile);
         return ResponseEntity.ok(updated);
