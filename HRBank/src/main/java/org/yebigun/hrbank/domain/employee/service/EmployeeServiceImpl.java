@@ -1,14 +1,12 @@
 package org.yebigun.hrbank.domain.employee.service;
 
-import java.time.LocalDate;
-import java.time.Year;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
+import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepository;
+import org.yebigun.hrbank.domain.binaryContent.storage.BinaryContentStorage;
 import org.yebigun.hrbank.domain.department.entity.Department;
 import org.yebigun.hrbank.domain.department.repository.DepartmentRepository;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDistributionDto;
@@ -22,6 +20,13 @@ import org.yebigun.hrbank.domain.employee.mapper.EmployeeMapper;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 import org.yebigun.hrbank.global.dto.CursorPageResponse;
 
+import java.io.IOException;
+import java.time.LocalDate;
+import java.time.Year;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+
 @RequiredArgsConstructor
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
@@ -29,6 +34,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeRepository employeeRepository;
     private final DepartmentRepository departmentRepository;
     private final EmployeeMapper employeeMapper;
+    private final BinaryContentRepository binaryContentRepository;
+    private final BinaryContentStorage binaryContentStorage;
     private static final Set<String> VALID_UNIT = Set.of("day", "week", "month", "quarter", "year");
     private static final Set<String> VALID_GROUP_BY = Set.of("department", "position");
     private static final Set<String> VALID_SORT_DIRECTION = Set.of("asc", "desc");
@@ -96,6 +103,26 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         String generatedEmpNo = generateUniqueEmployeeNumber();
 
+        BinaryContent savedMeta = null;
+
+        if (profile != null && !profile.isEmpty()) {
+            // 1. BinaryContent 메타데이터 저장
+            BinaryContent meta = BinaryContent.builder()
+                .fileName(profile.getOriginalFilename())
+                .contentType(profile.getContentType())
+                .size(profile.getSize())
+                .build();
+            savedMeta = binaryContentRepository.save(meta);
+
+            // 2. 실제 바이너리 파일 저장
+            try {
+                binaryContentStorage.put(savedMeta.getId(), profile.getBytes());
+            } catch (IOException e) {
+                throw new RuntimeException("프로필 이미지 저장 실패", e);
+            }
+        }
+
+        // (2) employee 엔티티 생성/저장
         Employee employee = Employee.builder()
             .name(request.name())
             .email(request.email())
@@ -105,7 +132,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             .hireDate(request.hireDate())
             .memo(request.memo())
             .status(EmployeeStatus.ACTIVE)
-            .profile(null) // 실제 프로필 이미지는 별도 처리 필요
+            .profile(savedMeta) // 없으면 null, 있으면 BinaryContent 객체!
             .build();
 
         Employee saved = employeeRepository.save(employee);
