@@ -12,9 +12,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
+import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogDto;
 import org.yebigun.hrbank.domain.changelog.dto.data.DiffDto;
-import org.yebigun.hrbank.domain.changelog.dto.response.CursorPageResponseChangeLogDto;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeType;
+import org.yebigun.hrbank.global.dto.CursorPageResponse;
 import org.yebigun.hrbank.global.dto.ErrorResponse;
 
 @Tag(name = "직원 정보 수정 이력 관리", description = "직원 정보 수정 이력 관리 API")
@@ -29,7 +30,7 @@ public interface ChangeLogApi {
             description = "조회 성공",
             content = @Content(
                 mediaType = "application/json",
-                schema = @Schema(implementation = CursorPageResponseChangeLogDto.class),
+                schema = @Schema(implementation = CursorPageResponse.class),
                 examples = @ExampleObject(value = """
                 {
                     "content": [
@@ -84,7 +85,7 @@ public interface ChangeLogApi {
             )
         )
     })
-    ResponseEntity<CursorPageResponseChangeLogDto> getChangeLogs(
+    ResponseEntity<CursorPageResponse<ChangeLogDto>> getChangeLogs(
         @Parameter(description = "대상 직원 사번") String employeeNumber,
         @Parameter(description = "이력 유형 ( CREATED, UPDATED, DELETED )") ChangeType type,
         @Parameter(description = "내용") String memo,

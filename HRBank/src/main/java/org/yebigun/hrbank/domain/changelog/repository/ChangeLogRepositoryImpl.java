@@ -14,10 +14,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogDto;
 import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogSearchCondition;
-import org.yebigun.hrbank.domain.changelog.dto.response.CursorPageResponseChangeLogDto;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeLog;
 import org.yebigun.hrbank.domain.changelog.entity.QChangeLog;
 import org.yebigun.hrbank.domain.changelog.mapper.ChangeLogMapper;
+import org.yebigun.hrbank.global.dto.CursorPageResponse;
 
 @Repository
 @RequiredArgsConstructor
@@ -27,7 +27,7 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
     private final ChangeLogMapper changeLogMapper;
 
     @Override
-    public CursorPageResponseChangeLogDto searchChangeLogs(ChangeLogSearchCondition condition) {
+    public CursorPageResponse<ChangeLogDto> searchChangeLogs(ChangeLogSearchCondition condition) {
         QChangeLog changeLog = QChangeLog.changeLog;
 
         // 필터링
@@ -58,10 +58,10 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
             .map(changeLogMapper::toDto)
             .toList();
 
-        return new CursorPageResponseChangeLogDto(
+        return new CursorPageResponse<ChangeLogDto>(
             dtoList,          // 현재 페이지 데이터
-            nextCursor,       // 커서 인코딩 값
             nextId,           // 다음 요청용 ID
+            nextCursor,       // 커서 인코딩 값
             condition.size(), // 요청한 페이지 크기
             pageContent.size(),    // 현재 페이지에 실제 포함된 데이터 수
             hasNext           // 다음 페이지 여부
