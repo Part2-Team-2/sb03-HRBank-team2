@@ -19,7 +19,7 @@ import org.yebigun.hrbank.domain.changelog.entity.QChangeLog;
 import org.yebigun.hrbank.domain.changelog.mapper.ChangeLogMapper;
 
 @RequiredArgsConstructor
-public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
+public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom {
 
     private final JPAQueryFactory queryFactory;
     private final ChangeLogMapper changeLogMapper;
