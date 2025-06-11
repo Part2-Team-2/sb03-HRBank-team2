@@ -48,7 +48,7 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
         List<ChangeLog> pageContent = hasNext ? result.subList(0, condition.size()) : result;
 
         // 다음 페이지용 커서 정보 (다음 페이지 요청 시 사용)
-        Long nextId = hasNext ? result.get(condition.size()).getId() : null;
+        Long nextId = hasNext ? result.get(condition.size() - 1).getId() : null;
 
         String nextCursor = (nextId != null)
             ? Base64.getEncoder().encodeToString(String.valueOf(nextId).getBytes(StandardCharsets.UTF_8))
