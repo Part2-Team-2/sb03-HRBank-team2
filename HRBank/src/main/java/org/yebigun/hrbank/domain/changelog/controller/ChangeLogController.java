@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -25,11 +26,12 @@ import org.yebigun.hrbank.domain.changelog.service.ChangeLogService;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/change-logs")
-public class ChangeLogController {
+public class ChangeLogController implements ChangeLogApi {
 
     private final ChangeLogService changeLogService;
 
     // 이력 목록 조회
+    @Override
     @GetMapping
     public ResponseEntity<CursorPageResponseChangeLogDto> getChangeLogs(
         @RequestParam(required = false) String employeeNumber,
@@ -54,9 +56,26 @@ public class ChangeLogController {
     }
 
     // 변경 상세 이력 조회
+    @Override
     @GetMapping("/{id}/diffs")
     public ResponseEntity<List<DiffDto>> getChangeLogDiffs(@PathVariable(name = "id") Long id) {
         return ResponseEntity.ok(changeLogService.getChangeLogDiffs(id));
+    }
+
+    // 이력 건수 조회
+    @Override
+    @GetMapping("/count")
+    public ResponseEntity<Long> getChangeLogCount(
+        @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE_TIME) Instant fromDate,
+        @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE_TIME) Instant toDate
+    ) {
+        Instant now = Instant.now();
+        // 삼항 연산자를 이용하여 기본값 보정
+        Instant from = fromDate != null ? fromDate : now.minus(7, ChronoUnit.DAYS);
+        Instant to = toDate != null ? toDate : now;
+
+        long count = changeLogService.countAllChangeLogs(from, to);
+        return ResponseEntity.ok(count);
     }
 
     // 커서 문자열 id 변환 메서드

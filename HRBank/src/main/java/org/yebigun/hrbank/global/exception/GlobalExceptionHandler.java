@@ -24,8 +24,8 @@ public class GlobalExceptionHandler {
     }
 
     // 데이터가 존재하지 않을 경우
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<ErrorResponse> handleException(NoSuchElementException e) {
+    @ExceptionHandler({NoSuchElementException.class, NotFoundException.class})
+    public ResponseEntity<ErrorResponse> handleNotFoundException(RuntimeException e) {
 
         return sendErrorResponse(HttpStatus.NOT_FOUND, "요청한 데이터를 찾을 수 없습니다.", e.getMessage());
     }
