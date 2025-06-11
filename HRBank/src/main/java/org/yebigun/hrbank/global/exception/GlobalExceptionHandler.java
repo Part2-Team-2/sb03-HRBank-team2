@@ -17,8 +17,8 @@ public class GlobalExceptionHandler {
     }
 
     // 잘못된 요청을 하는 경우
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleException(IllegalArgumentException e) {
+    @ExceptionHandler({IllegalArgumentException.class, DuplicateException.class, UnsupportedException.class})
+    public ResponseEntity<ErrorResponse> handleBadRequestException(Exception e) {
 
         return sendErrorResponse(HttpStatus.BAD_REQUEST, "잘못된 요청입니다.", e.getMessage());
     }

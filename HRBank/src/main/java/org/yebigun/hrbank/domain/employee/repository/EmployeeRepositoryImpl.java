@@ -3,18 +3,15 @@ package org.yebigun.hrbank.domain.employee.repository;
 import static com.querydsl.core.types.dsl.Expressions.numberTemplate;
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.StringPath;
-import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -24,10 +21,12 @@ import lombok.RequiredArgsConstructor;
 import org.yebigun.hrbank.domain.department.dto.data.DepartmentEmployeeCount;
 import org.yebigun.hrbank.domain.department.entity.QDepartment;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDistributionDto;
-import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeTrendDto;
+import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.domain.employee.entity.QEmployee;
+import org.yebigun.hrbank.domain.employee.exception.UnsupportedSortFieldException;
+import org.yebigun.hrbank.domain.employee.exception.UnsupportedUnitException;
 
 @RequiredArgsConstructor
 public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
@@ -184,7 +183,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
                     break;
 
                 default:
-                    throw new IllegalArgumentException("지원하지 않는 sortField: " + sortField);
+                    throw new UnsupportedSortFieldException("지원하지 않는 sortField: " + sortField);
             }
         }
 
@@ -246,7 +245,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
         return switch (sortField) {
             case "name", "employeeNumber" -> cursor;
             case "hireDate" -> LocalDate.parse(cursor); // ISO 형식 (yyyy-MM-dd)
-            default -> throw new IllegalArgumentException("지원하지 않는 정렬 필드입니다.");
+            default -> throw new UnsupportedSortFieldException("지원하지 않는 정렬 필드입니다.");
         };
     }
 
@@ -257,7 +256,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
             case "name" -> new OrderSpecifier<>(order, e.name);
             case "employeeNumber" -> new OrderSpecifier<>(order, e.employeeNumber);
             case "hireDate" -> new OrderSpecifier<>(order, e.hireDate);
-            default -> throw new IllegalArgumentException("지원하지 않는 정렬 필드입니다.");
+            default -> throw new UnsupportedSortFieldException("지원하지 않는 정렬 필드입니다.");
         };
     }
 
@@ -314,7 +313,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
                 case "month" -> current.plusMonths(1);
                 case "quarter" -> current.plusMonths(3);
                 case "year" -> current.plusYears(1);
-                default -> throw new IllegalArgumentException("지원하지 않는 시간 단위입니다.");
+                default -> throw new UnsupportedUnitException("지원하지 않는 시간 단위입니다.");
             };
         }
 
