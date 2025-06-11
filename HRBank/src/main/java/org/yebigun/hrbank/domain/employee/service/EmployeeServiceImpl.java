@@ -14,6 +14,7 @@ import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeTrendDto;
 import org.yebigun.hrbank.domain.employee.dto.request.EmployeeCreateRequest;
 import org.yebigun.hrbank.domain.employee.dto.request.EmployeeListRequest;
+import org.yebigun.hrbank.domain.employee.dto.request.EmployeeUpdateRequest;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.domain.employee.mapper.EmployeeMapper;
@@ -239,4 +240,54 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         return fromDate;
     }
+
+    @Transactional
+    public EmployeeDto updateEmployee(Long employeeId, EmployeeUpdateRequest request, MultipartFile profile) {
+        Employee employee = employeeRepository.findById(employeeId)
+            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 직원입니다."));
+
+        if (request.email() != null && !employee.getEmail().equals(request.email())
+            && employeeRepository.existsByEmail(request.email())) {
+            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
+        }
+
+        employee.setName(request.name());
+        employee.setEmail(request.email());
+        employee.setPosition(request.position());
+        employee.setHireDate(request.hireDate());
+        employee.setStatus(request.status());
+        employee.setMemo(request.memo());
+
+        if (request.departmentId() != null) {
+            Department department = departmentRepository.findById(request.departmentId())
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 부서입니다."));
+            employee.setDepartment(department);
+        }
+
+        if (profile != null && !profile.isEmpty()) {
+            if (employee.getProfile() != null) {
+                Long oldProfileId = employee.getProfile().getId();
+                binaryContentRepository.deleteById(oldProfileId);
+                binaryContentStorage.delete(oldProfileId);
+            }
+
+            BinaryContent meta = BinaryContent.builder()
+                .fileName(profile.getOriginalFilename())
+                .contentType(profile.getContentType())
+                .size(profile.getSize())
+                .build();
+            BinaryContent savedMeta = binaryContentRepository.save(meta);
+
+            try {
+                binaryContentStorage.put(savedMeta.getId(), profile.getBytes());
+            } catch (IOException e) {
+                throw new RuntimeException("프로필 이미지 저장 실패", e);
+            }
+            employee.setProfile(savedMeta);
+        }
+
+        Employee updated = employeeRepository.save(employee);
+        return employeeMapper.toDto(updated);
+    }
+
 }
