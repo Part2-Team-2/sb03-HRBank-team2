@@ -2,6 +2,7 @@ package org.yebigun.hrbank.domain.binaryContent.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.mapper.BinaryContentMapper;
@@ -14,6 +15,7 @@ import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepositor
  * Date         : 2025. 6. 5.
  */
 
+@Transactional(readOnly = true)
 @Service
 @RequiredArgsConstructor
 public class BinaryContentServiceImpl implements BinaryContentService {

@@ -41,7 +41,6 @@ public class BackupFileStorageImpl implements BackupFileStorage {
 
     private final BinaryContentRepository binaryContentRepository;
 
-
     private Path root;
 
     @Value("${file.upload.all.path}")
