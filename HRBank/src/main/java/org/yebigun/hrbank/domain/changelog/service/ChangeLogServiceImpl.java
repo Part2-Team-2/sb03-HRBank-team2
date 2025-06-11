@@ -170,22 +170,6 @@ public class ChangeLogServiceImpl implements ChangeLogService {
         }
     }
 
-    @Override
-    public CursorPageResponseChangeLogDto getChangeLogs(ChangeLogSearchCondition condition) {
-        return changeLogRepository.searchChangeLogs(condition);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<DiffDto> getChangeLogDiffs(Long changeLogId) {
-        ChangeLog changeLog = changeLogRepository.findById(changeLogId)
-            .orElseThrow(() -> new EntityNotFoundException("변경 이력을 찾을 수 없습니다"));
-
-        return  changeLog.getDiffs().stream()
-            .map(diff -> new DiffDto(diff.getPropertyName(), diff.getBefore(), diff.getAfter()))
-            .collect(Collectors.toList());
-    }
-
     // 변경 상세 내용 필드 구성
     private ChangeLogDiff createDiff(PropertyName property, String beforeValue, String afterValue) {
         return ChangeLogDiff.builder()
