@@ -9,9 +9,9 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogDto;
 import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogSearchCondition;
 import org.yebigun.hrbank.domain.changelog.dto.data.DiffDto;
-import org.yebigun.hrbank.domain.changelog.dto.response.CursorPageResponseChangeLogDto;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeLog;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeLogDiff;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeType;
@@ -19,6 +19,7 @@ import org.yebigun.hrbank.domain.changelog.entity.PropertyName;
 import org.yebigun.hrbank.domain.changelog.repository.ChangeLogDiffRepository;
 import org.yebigun.hrbank.domain.changelog.repository.ChangeLogRepository;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
+import org.yebigun.hrbank.global.dto.CursorPageResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +45,7 @@ public class ChangeLogServiceImpl implements ChangeLogService {
     }
 
     @Override
-    public CursorPageResponseChangeLogDto getChangeLogs(ChangeLogSearchCondition condition) {
+    public CursorPageResponse<ChangeLogDto> getChangeLogs(ChangeLogSearchCondition condition) {
         return changeLogRepository.searchChangeLogs(condition);
     }
 

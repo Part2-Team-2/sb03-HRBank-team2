@@ -14,10 +14,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogDto;
 import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogSearchCondition;
-import org.yebigun.hrbank.domain.changelog.dto.response.CursorPageResponseChangeLogDto;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeLog;
 import org.yebigun.hrbank.domain.changelog.entity.QChangeLog;
 import org.yebigun.hrbank.domain.changelog.mapper.ChangeLogMapper;
+import org.yebigun.hrbank.global.dto.CursorPageResponse;
 
 @Repository
 @RequiredArgsConstructor
@@ -27,7 +27,7 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
     private final ChangeLogMapper changeLogMapper;
 
     @Override
-    public CursorPageResponseChangeLogDto searchChangeLogs(ChangeLogSearchCondition condition) {
+    public CursorPageResponse<ChangeLogDto> searchChangeLogs(ChangeLogSearchCondition condition) {
         QChangeLog changeLog = QChangeLog.changeLog;
 
         // 필터링
@@ -48,7 +48,8 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
         List<ChangeLog> pageContent = hasNext ? result.subList(0, condition.size()) : result;
 
         // 다음 페이지용 커서 정보 (다음 페이지 요청 시 사용)
-        Long nextId = hasNext ? pageContent.get(pageContent.size() - 1).getId() : null;
+        Long nextId = hasNext ? result.get(condition.size() - 1).getId() : null;
+
         String nextCursor = (nextId != null)
             ? Base64.getEncoder().encodeToString(String.valueOf(nextId).getBytes(StandardCharsets.UTF_8))
             : null;
@@ -58,13 +59,13 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
             .map(changeLogMapper::toDto)
             .toList();
 
-        return new CursorPageResponseChangeLogDto(
-            dtoList,          // 현재 페이지 데이터
-            nextCursor,       // 커서 인코딩 값
-            nextId,           // 다음 요청용 ID
-            condition.size(), // 요청한 페이지 크기
-            pageContent.size(),    // 현재 페이지에 실제 포함된 데이터 수
-            hasNext           // 다음 페이지 여부
+        return new CursorPageResponse<ChangeLogDto>(
+            dtoList,
+            nextId,
+            nextCursor,
+            condition.size(),
+            pageContent.size(),
+            hasNext
         );
     }
 

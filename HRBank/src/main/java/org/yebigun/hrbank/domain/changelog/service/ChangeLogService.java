@@ -2,10 +2,11 @@ package org.yebigun.hrbank.domain.changelog.service;
 
 import java.time.Instant;
 import java.util.List;
+import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogDto;
 import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogSearchCondition;
 import org.yebigun.hrbank.domain.changelog.dto.data.DiffDto;
-import org.yebigun.hrbank.domain.changelog.dto.response.CursorPageResponseChangeLogDto;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
+import org.yebigun.hrbank.global.dto.CursorPageResponse;
 
 public interface ChangeLogService {
 
@@ -16,7 +17,7 @@ public interface ChangeLogService {
     void deleteRecord(Employee beforeValue, String ipAddress);
 
     // 이력 목록 조회
-    CursorPageResponseChangeLogDto getChangeLogs(ChangeLogSearchCondition condition);
+    CursorPageResponse<ChangeLogDto> getChangeLogs(ChangeLogSearchCondition condition);
 
     // 이력 목록 상세 조회
     List<DiffDto> getChangeLogDiffs(Long changeLogId);
