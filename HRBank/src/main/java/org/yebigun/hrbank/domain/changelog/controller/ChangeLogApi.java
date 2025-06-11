@@ -9,6 +9,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import java.time.Instant;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
@@ -94,9 +97,9 @@ public interface ChangeLogApi {
         @Parameter(description = "수정 일시( 까지 )")Instant atTo,
         @Parameter(description = "이전 페이지 마지막 요소 ID") Long idAfter,
         @Parameter(description = "커서 ( 이전 페이지의 마지막 ID )") String cursor,
-        @Parameter(description = "페이지 크기 ( 기본값: 10 )") int size,
-        @Parameter(description = "정렬 필드 ( ipAddress, at ) 기본값 : at") String sortField,
-        @Parameter(description = "정렬 필드 ( asc, desc ) 기본값 : desc") String sortDirection
+        @Parameter(description = "페이지 크기 ( 기본값: 10 )") @Min(1) @Max(100) int size,
+        @Parameter(description = "정렬 필드 ( ipAddress, at ) 기본값 : at") @Pattern(regexp = "^(at|ipAddress)$") String sortField,
+        @Parameter(description = "정렬 필드 ( asc, desc ) 기본값 : desc") @Pattern(regexp = "^(asc|desc)$") String sortDirection
     );
 
     @Operation(

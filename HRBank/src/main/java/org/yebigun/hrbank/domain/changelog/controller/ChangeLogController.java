@@ -43,9 +43,9 @@ public class ChangeLogController implements ChangeLogApi {
         @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE_TIME)Instant atTo,
         @RequestParam(required = false) Long idAfter,
         @RequestParam(required = false) String cursor,
-        @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
-        @RequestParam(defaultValue = "at") @Pattern(regexp = "^(at|ipAddress)$") String sortField,
-        @RequestParam(defaultValue = "desc") @Pattern(regexp = "^(asc|desc)$") String sortDirection
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "at") String sortField,
+        @RequestParam(defaultValue = "desc") String sortDirection
     ) {
         // 커서 디코딩, idAfter 변환
         Long effectiveIdAfter = resolveCursor(cursor, idAfter);
