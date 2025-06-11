@@ -67,14 +67,25 @@ public class BackupServiceImpl implements BackupService {
         return processBackupIfRequired(backupBuilder);
     }
 
+    private boolean isValidStatus(String status) {
+        try{
+            BackupStatus.valueOf(status.trim().toUpperCase());
+            return true;
+        } catch(IllegalArgumentException e){
+            return false;
+        }
+    }
+
     @Override
-    public BackupDto findLatest(BackupStatus backupStatus) {
-        Optional<Backup> backup = backupRepository.findTopByBackupStatusOrderByCreatedAtDesc(backupStatus);
-        if(backup.isPresent()) {
-            return backupMapper.toDto(backup.get());
+    public BackupDto findLatest(String status) {
+        if(!isValidStatus(status)) {
+            throw new IllegalArgumentException("유효하지 않은 상태값입니다.");
         }
 
-        throw new IllegalArgumentException("유효하지 않은 상태값입니다.");
+        BackupStatus backupStatus = BackupStatus.valueOf(status.trim().toUpperCase());
+        return backupRepository.findTopByBackupStatusOrderByCreatedAtDesc(backupStatus)
+            .map(backupMapper::toDto)
+            .orElse(null);
     }
 
     @Transactional(readOnly = true)
