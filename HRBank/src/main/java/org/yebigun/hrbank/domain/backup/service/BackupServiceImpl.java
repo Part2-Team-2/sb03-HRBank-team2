@@ -79,6 +79,7 @@ public class BackupServiceImpl implements BackupService {
         }
     }
 
+    @Transactional(readOnly = true)
     @Override
     public BackupDto findLatest(String status) {
         if (status == null || status.isBlank()) {
