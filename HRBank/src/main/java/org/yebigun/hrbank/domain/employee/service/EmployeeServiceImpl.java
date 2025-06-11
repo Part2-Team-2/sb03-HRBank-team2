@@ -1,6 +1,7 @@
 package org.yebigun.hrbank.domain.employee.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,6 +29,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
+@Log4j2
 @RequiredArgsConstructor
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
@@ -241,10 +243,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         return fromDate;
     }
 
+
     @Transactional
     public EmployeeDto updateEmployee(Long employeeId, EmployeeUpdateRequest request, MultipartFile profile) {
         System.out.println("서비스 진입: updateEmployee, id=" + employeeId);
-
         Employee employee = employeeRepository.findById(employeeId)
             .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 직원입니다."));
 
@@ -266,11 +268,13 @@ public class EmployeeServiceImpl implements EmployeeService {
             employee.setDepartment(department);
         }
 
+        log.info("5");
         if (profile != null && !profile.isEmpty()) {
             if (employee.getProfile() != null) {
                 Long oldProfileId = employee.getProfile().getId();
-                binaryContentRepository.deleteById(oldProfileId);
                 binaryContentStorage.delete(oldProfileId);
+                binaryContentRepository.deleteById(oldProfileId);
+
             }
 
             BinaryContent meta = BinaryContent.builder()
