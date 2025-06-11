@@ -22,5 +22,7 @@ public interface EmployeeService {
 
     EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profile);
 
+    void deleteEmployee(Long employeeId);
+
     EmployeeDto getEmployeeById(Long id);
 }

@@ -1,17 +1,10 @@
 package org.yebigun.hrbank.domain.employee.service;
 
-import java.time.LocalDate;
-import java.time.Year;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Set;
-import java.util.concurrent.ThreadLocalRandom;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 import org.yebigun.hrbank.domain.department.entity.Department;
 import org.yebigun.hrbank.domain.department.exception.NotFoundDepartmentException;
 import org.yebigun.hrbank.domain.department.repository.DepartmentRepository;
@@ -30,6 +23,13 @@ import org.yebigun.hrbank.domain.employee.exception.UnsupportedUnitException;
 import org.yebigun.hrbank.domain.employee.mapper.EmployeeMapper;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 import org.yebigun.hrbank.global.dto.CursorPageResponse;
+
+import java.time.LocalDate;
+import java.time.Year;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
 
 @RequiredArgsConstructor
 @Service
@@ -204,10 +204,17 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     @Override
+    @Transactional
+    public void deleteEmployee(Long employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+            .orElseThrow(() -> new EntityNotFoundException("직원을 찾을 수 없습니다."));
+        employeeRepository.delete(employee);
+    }
     @Transactional(readOnly = true)
     public EmployeeDto getEmployeeById(Long id) {
         Employee employee = employeeRepository.findById(id)
             .orElseThrow(() -> new NoSuchElementException("직원을 찾을 수 없습니다."));
         return employeeMapper.toDto(employee);
+
     }
 }
