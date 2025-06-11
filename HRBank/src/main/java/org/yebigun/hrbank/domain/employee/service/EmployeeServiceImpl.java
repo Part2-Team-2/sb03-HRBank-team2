@@ -3,12 +3,15 @@ package org.yebigun.hrbank.domain.employee.service;
 import java.time.LocalDate;
 import java.time.Year;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 import org.yebigun.hrbank.domain.department.entity.Department;
 import org.yebigun.hrbank.domain.department.exception.NotFoundDepartmentException;
 import org.yebigun.hrbank.domain.department.repository.DepartmentRepository;
@@ -198,5 +201,13 @@ public class EmployeeServiceImpl implements EmployeeService {
         };
 
         return fromDate;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public EmployeeDto getEmployeeById(Long id) {
+        Employee employee = employeeRepository.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("직원을 찾을 수 없습니다."));
+        return employeeMapper.toDto(employee);
     }
 }
