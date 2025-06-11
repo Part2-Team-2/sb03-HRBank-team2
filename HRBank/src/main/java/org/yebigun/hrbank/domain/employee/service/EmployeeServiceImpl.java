@@ -1,5 +1,7 @@
 package org.yebigun.hrbank.domain.employee.service;
 
+
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
@@ -9,6 +11,7 @@ import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepository;
 import org.yebigun.hrbank.domain.binaryContent.storage.BinaryContentStorage;
 import org.yebigun.hrbank.domain.department.entity.Department;
+import org.yebigun.hrbank.domain.department.exception.NotFoundDepartmentException;
 import org.yebigun.hrbank.domain.department.repository.DepartmentRepository;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDistributionDto;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
@@ -18,10 +21,14 @@ import org.yebigun.hrbank.domain.employee.dto.request.EmployeeListRequest;
 import org.yebigun.hrbank.domain.employee.dto.request.EmployeeUpdateRequest;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
+import org.yebigun.hrbank.domain.employee.exception.DuplicateEmailException;
+import org.yebigun.hrbank.domain.employee.exception.UnsupportedGroupByException;
+import org.yebigun.hrbank.domain.employee.exception.UnsupportedSortDirectionException;
+import org.yebigun.hrbank.domain.employee.exception.UnsupportedSortFieldException;
+import org.yebigun.hrbank.domain.employee.exception.UnsupportedUnitException;
 import org.yebigun.hrbank.domain.employee.mapper.EmployeeMapper;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 import org.yebigun.hrbank.global.dto.CursorPageResponse;
-
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.Year;
@@ -29,7 +36,14 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ThreadLocalRandom;
 
-@Log4j2
+import java.time.LocalDate;
+import java.time.Year;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+
+
 @RequiredArgsConstructor
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
@@ -48,7 +62,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public List<EmployeeTrendDto> getEmployeeTrend(LocalDate from, LocalDate to, String unit) {
 
         if (!VALID_UNIT.contains(unit)) {
-            throw new IllegalArgumentException("지원하지 않는 시간 단위입니다.");
+            throw new UnsupportedUnitException("지원하지 않는 시간 단위입니다.");
         }
 
         from = from != null ? from : getDate(unit);
@@ -64,7 +78,7 @@ public class EmployeeServiceImpl implements EmployeeService {
                                                                  EmployeeStatus status) {
 
         if (!VALID_GROUP_BY.contains(groupBy)) {
-            throw new IllegalArgumentException("지원하지 않는 그룹화 기준입니다.");
+            throw new UnsupportedGroupByException("지원하지 않는 그룹화 기준입니다.");
         }
 
         List<EmployeeDistributionDto> employees = employeeRepository.findEmployeeByStatusGroupByDepartmentOrPosition(
@@ -77,32 +91,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional
     public EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profile) {
 
-        // record 방식: getXxx() → xxx()
-        if (request.name() == null || request.name().trim().isEmpty())
-            throw new IllegalArgumentException("이름은 필수입니다.");
-
-        if (request.email() == null || request.email().trim().isEmpty())
-            throw new IllegalArgumentException("이메일은 필수입니다.");
-
-        if (request.departmentId() == null)
-            throw new IllegalArgumentException("부서는 필수입니다.");
-
-        if (request.position() == null || request.position().trim().isEmpty())
-            throw new IllegalArgumentException("직급은 필수입니다.");
-
-        if (request.hireDate() == null)
-            throw new IllegalArgumentException("입사일은 필수입니다.");
-
-        if (!request.email().matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
-            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
-        }
-
         if (employeeRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
+            throw new DuplicateEmailException("이미 등록된 이메일입니다.");
         }
 
         Department department = departmentRepository.findById(request.departmentId())
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 부서입니다."));
+            .orElseThrow(() -> new NotFoundDepartmentException("존재하지 않는 부서입니다."));
 
         String generatedEmpNo = generateUniqueEmployeeNumber();
 
@@ -168,7 +162,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         String sortDirection = request.sortDirection();
 
         if (!VALID_SORT_DIRECTION.contains(sortDirection)) {
-            throw new IllegalArgumentException("잘못된 정렬 방향입니다.");
+            throw new UnsupportedSortDirectionException("잘못된 정렬 방향입니다.");
         }
 
         List<Employee> employees = employeeRepository.findAllByRequest(
@@ -192,7 +186,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             nextCursor = null;
             nextIdAfter = null;
         }
-        
+
         List<EmployeeDto> employeeDtos = employees.stream()
             .map(employeeMapper::toDto)
             .toList();
@@ -206,12 +200,13 @@ public class EmployeeServiceImpl implements EmployeeService {
         return response;
     }
 
-    private String getNextCursor(String sortField, Employee employee) {
+    private String getNextCursor(String sortField, Employee employee)
+        throws UnsupportedSortFieldException {
         return switch (sortField) {
             case "name" -> employee.getName();
             case "employeeNumber" -> employee.getEmployeeNumber();
             case "hireDate" -> employee.getHireDate().toString();
-            default -> throw new IllegalArgumentException("지원하지 않는 정렬 필드입니다.");
+            default -> throw new UnsupportedSortFieldException("지원하지 않는 정렬 필드입니다.");
         };
     }
 
@@ -268,7 +263,6 @@ public class EmployeeServiceImpl implements EmployeeService {
             employee.setDepartment(department);
         }
 
-        log.info("5");
         if (profile != null && !profile.isEmpty()) {
             if (employee.getProfile() != null) {
                 Long oldProfileId = employee.getProfile().getId();
@@ -296,4 +290,18 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeMapper.toDto(updated);
     }
 
+    @Override
+    @Transactional
+    public void deleteEmployee(Long employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+            .orElseThrow(() -> new EntityNotFoundException("직원을 찾을 수 없습니다."));
+        employeeRepository.delete(employee);
+    }
+    @Transactional(readOnly = true)
+    public EmployeeDto getEmployeeById(Long id) {
+        Employee employee = employeeRepository.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("직원을 찾을 수 없습니다."));
+        return employeeMapper.toDto(employee);
+
+    }
 }

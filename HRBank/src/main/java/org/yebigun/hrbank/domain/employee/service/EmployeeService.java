@@ -16,6 +16,7 @@ import java.util.List;
 public interface EmployeeService {
 
     List<EmployeeTrendDto> getEmployeeTrend(LocalDate from, LocalDate to, String unit);
+
     List<EmployeeDistributionDto> getEmployeeDistribution(String groupBy, EmployeeStatus status);
 
     Long getEmployeeCount(EmployeeStatus status, LocalDate fromDate, LocalDate toDate);
@@ -24,4 +25,7 @@ public interface EmployeeService {
     EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profile);
     EmployeeDto updateEmployee(Long employeeId, EmployeeUpdateRequest request, MultipartFile profile);
 
+    void deleteEmployee(Long employeeId);
+
+    EmployeeDto getEmployeeById(Long id);
 }

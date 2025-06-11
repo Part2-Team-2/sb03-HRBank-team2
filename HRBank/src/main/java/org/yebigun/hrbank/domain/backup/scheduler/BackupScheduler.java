@@ -15,7 +15,7 @@ import org.yebigun.hrbank.domain.backup.service.BackupService;
 @Log4j2
 @Component
 @RequiredArgsConstructor
-public class HourlyBackupScheduler {
+public class BackupScheduler {
     private final BackupService backupService;
 
     @Scheduled(cron = "0 0 * * * *")
