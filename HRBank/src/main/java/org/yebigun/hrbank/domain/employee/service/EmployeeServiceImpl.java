@@ -231,16 +231,15 @@ public class EmployeeServiceImpl implements EmployeeService {
         return fromDate;
     }
 
-
+    @Override
     @Transactional
     public EmployeeDto updateEmployee(Long employeeId, EmployeeUpdateRequest request, MultipartFile profile) {
-        System.out.println("서비스 진입: updateEmployee, id=" + employeeId);
         Employee employee = employeeRepository.findById(employeeId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 직원입니다."));
+            .orElseThrow(() -> new NoSuchElementException("존재하지 않는 직원입니다."));
 
         if (request.email() != null && !employee.getEmail().equals(request.email())
             && employeeRepository.existsByEmail(request.email())) {
-            throw new IllegalArgumentException("이미 등록된 이메일입니다.");
+            throw new NoSuchElementException("이미 등록된 이메일입니다.");
         }
 
         employee.setName(request.name());
@@ -252,7 +251,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         if (request.departmentId() != null) {
             Department department = departmentRepository.findById(request.departmentId())
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 부서입니다."));
+                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 부서입니다."));
             employee.setDepartment(department);
         }
 
