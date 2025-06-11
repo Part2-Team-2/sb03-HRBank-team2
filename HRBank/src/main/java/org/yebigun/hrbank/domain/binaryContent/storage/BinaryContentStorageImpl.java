@@ -16,6 +16,12 @@ import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepositor
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.*;
 import java.util.NoSuchElementException;
 import java.util.Set;
@@ -184,4 +190,21 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         }
         return fileName.substring(index).toLowerCase();
     }
+
+    @Override
+    public void delete(Long binaryContentId) {
+        BinaryContent binaryContent = binaryContentRepository.findById(binaryContentId)
+            .orElseThrow(() -> new NoSuchElementException("파일을 찾을 수 없습니다."));
+
+        String extension = getExtension(binaryContent.getFileName());
+        Path pathToDelete = resolvePathForRead(binaryContent, extension);
+
+        try {
+            Files.deleteIfExists(pathToDelete);
+            binaryContentRepository.delete(binaryContent);
+        } catch (IOException e) {
+            throw new RuntimeException("파일 삭제 실패", e);
+        }
+    }
+
 }
