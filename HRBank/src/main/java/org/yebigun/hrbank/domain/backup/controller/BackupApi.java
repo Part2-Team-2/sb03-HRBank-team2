@@ -135,7 +135,7 @@ public interface BackupApi {
         )
     })
     ResponseEntity<BackupDto> findLatest(
-        @Parameter(required = false, description = "백업 상태") BackupStatus status
+        @Parameter(required = false, description = "백업 상태") String status
     );
 
 }

@@ -26,7 +26,7 @@ public class BackupController implements BackupApi {
     private final BackupService backupService;
 
     @GetMapping("/latest")
-    public ResponseEntity<BackupDto> findLatest(@RequestParam(required = false, defaultValue = "COMPLETED") BackupStatus status) {
+    public ResponseEntity<BackupDto> findLatest(@RequestParam(required = false, defaultValue = "COMPLETED") String status) {
         BackupDto latest = backupService.findLatest(status);
         return ResponseEntity.status(HttpStatus.OK).body(latest);
     }

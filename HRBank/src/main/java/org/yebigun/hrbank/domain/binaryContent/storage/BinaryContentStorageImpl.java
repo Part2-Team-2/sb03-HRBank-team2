@@ -17,7 +17,11 @@ import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepositor
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.binaryContent.storage
@@ -55,6 +59,40 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
             this.root = uploadPath;
         } catch (Exception e) {
             throw new RuntimeException("업로드 디렉토리 생성에 실패했습니다: " + path, e);
+        }
+    }
+
+    @Override
+    public int deleteUnusedFiles() {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(root)) {
+            // 1. DB에서 사용 중인 파일 이름 목록 수집
+            Set<String> validFileNames = binaryContentRepository.findAll()
+                .stream()
+                .flatMap(b -> {
+                    String ext = getExtension(b.getFileName());
+                    if (isCsvOrLog(ext)) {
+                        return Stream.of(b.getFileName());
+                    } else {
+                        return Stream.of(b.getId() + ext);
+                    }
+                })
+                .collect(Collectors.toSet());
+
+            int deletedCount = 0;
+            for (Path file : stream) {
+                if (Files.isRegularFile(file)) {
+                    String fileName = file.getFileName().toString();
+                    if (!validFileNames.contains(fileName)) {
+                        Files.deleteIfExists(file);
+                        deletedCount++;
+                        log.info("삭제된 미사용 파일: {}", fileName);
+                    }
+                }
+            }
+            return deletedCount;
+
+        } catch (IOException e) {
+            throw new RuntimeException("미사용 파일 정리에 실패했습니다", e);
         }
     }
 
