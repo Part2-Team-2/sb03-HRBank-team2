@@ -48,7 +48,8 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
         List<ChangeLog> pageContent = hasNext ? result.subList(0, condition.size()) : result;
 
         // 다음 페이지용 커서 정보 (다음 페이지 요청 시 사용)
-        Long nextId = hasNext ? pageContent.get(pageContent.size() - 1).getId() : null;
+        Long nextId = hasNext ? result.get(condition.size()).getId() : null;
+
         String nextCursor = (nextId != null)
             ? Base64.getEncoder().encodeToString(String.valueOf(nextId).getBytes(StandardCharsets.UTF_8))
             : null;
@@ -59,12 +60,12 @@ public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
             .toList();
 
         return new CursorPageResponse<ChangeLogDto>(
-            dtoList,          // 현재 페이지 데이터
-            nextId,           // 다음 요청용 ID
-            nextCursor,       // 커서 인코딩 값
-            condition.size(), // 요청한 페이지 크기
-            pageContent.size(),    // 현재 페이지에 실제 포함된 데이터 수
-            hasNext           // 다음 페이지 여부
+            dtoList,
+            nextId,
+            nextCursor,
+            condition.size(),
+            pageContent.size(),
+            hasNext
         );
     }
 
