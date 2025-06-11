@@ -5,7 +5,6 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 import org.yebigun.hrbank.domain.backup.entity.Backup;
 import org.yebigun.hrbank.domain.backup.entity.BackupStatus;
 import org.yebigun.hrbank.domain.backup.entity.QBackup;
@@ -19,9 +18,8 @@ import java.util.List;
  * Author       : dounguk
  * Date         : 2025. 6. 9.
  */
-@Repository
 @RequiredArgsConstructor
-public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
+public class BackupRepositoryImpl implements BackupRepositoryCustom {
     private static final String STARTED_AT = "startedAt";
     private static final String ENDED_AT = "endedAt";
 
@@ -50,9 +48,7 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
             .from(qBackup)
             .where(where)
             .fetchOne();
-
         return totalElements == null ? 0 : totalElements;
-
     }
 
     @Override
@@ -87,7 +83,7 @@ public class BackupRepositoryCustomImpl implements BackupRepositoryCustom {
             }
             else {// (ENDED_AT.equals(sortField))
                 if (sortDirection == Order.ASC) {
-                        cursorCondition.or(qBackup.startedAtTo.gt(cursor));
+                    cursorCondition.or(qBackup.startedAtTo.gt(cursor));
                     cursorCondition.or(qBackup.startedAtTo.eq(cursor).and(qBackup.id.gt(idAfter)));
                 } else {
                     cursorCondition.or(qBackup.startedAtTo.lt(cursor));

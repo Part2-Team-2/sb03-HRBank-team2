@@ -23,4 +23,5 @@ public interface ChangeLogService {
 
     // 이력 건수 조회
     long countAllChangeLogs(Instant from, Instant to);
+
 }
