@@ -39,4 +39,8 @@ public class ChangeLogDiff {
 
     @Column(name = "after")
     private String after;
+
+    public void update(ChangeLog changeLog) {
+        this.changeLog = changeLog;
+    }
 }
