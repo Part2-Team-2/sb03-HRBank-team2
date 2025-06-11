@@ -68,6 +68,9 @@ public class BackupServiceImpl implements BackupService {
     }
 
     private boolean isValidStatus(String status) {
+        if (status == null) {
+            return false;
+        }
         try{
             BackupStatus.valueOf(status.trim().toUpperCase());
             return true;
@@ -78,6 +81,10 @@ public class BackupServiceImpl implements BackupService {
 
     @Override
     public BackupDto findLatest(String status) {
+        if (status == null || status.isBlank()) {
+            status = BackupStatus.COMPLETED.name();
+        }
+
         if(!isValidStatus(status)) {
             throw new IllegalArgumentException("유효하지 않은 상태값입니다.");
         }

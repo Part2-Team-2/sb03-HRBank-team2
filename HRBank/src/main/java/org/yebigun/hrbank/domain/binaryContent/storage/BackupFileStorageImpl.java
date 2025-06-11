@@ -6,7 +6,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.yebigun.hrbank.domain.backup.repository.BackupRepository;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepository;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
@@ -41,7 +40,6 @@ public class BackupFileStorageImpl implements BackupFileStorage {
     private static final String PATH = "uploads";
 
     private final BinaryContentRepository binaryContentRepository;
-    private final BackupRepository backupRepository;
 
 
     private Path root;
