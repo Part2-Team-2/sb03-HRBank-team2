@@ -11,7 +11,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
 import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogDto;
 import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogSearchCondition;
 import org.yebigun.hrbank.domain.changelog.dto.response.CursorPageResponseChangeLogDto;
@@ -19,7 +18,6 @@ import org.yebigun.hrbank.domain.changelog.entity.ChangeLog;
 import org.yebigun.hrbank.domain.changelog.entity.QChangeLog;
 import org.yebigun.hrbank.domain.changelog.mapper.ChangeLogMapper;
 
-@Repository
 @RequiredArgsConstructor
 public class ChangeLogRepositoryImpl implements ChangeLogRepositoryCustom{
 
