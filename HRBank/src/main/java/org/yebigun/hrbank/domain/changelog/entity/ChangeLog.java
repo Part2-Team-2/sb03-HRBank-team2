@@ -41,7 +41,7 @@ public class ChangeLog {
     @Column(name = "memo", columnDefinition = "TEXT")
     private String memo;
 
-    @Column(name = "ip_address", nullable = false, columnDefinition = "INET")
+    @Column(name = "ip_address", nullable = false, length = 45)
     private String ipAddress;
 
     @Column(name = "at", nullable = false, columnDefinition = "TIMESTAMPTZ")
