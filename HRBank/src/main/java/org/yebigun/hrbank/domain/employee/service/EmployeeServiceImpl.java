@@ -1,7 +1,6 @@
 package org.yebigun.hrbank.domain.employee.service;
 
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -290,8 +289,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     public void deleteEmployee(Long employeeId) {
         // 1) 직원 조회 (없으면 404)
         Employee employee = employeeRepository.findById(employeeId)
-            .orElseThrow(() -> new EntityNotFoundException("직원을 찾을 수 없습니다. id=" + employeeId));
-        
+            .orElseThrow(() -> new NoSuchElementException("직원을 찾을 수 없습니다. id=" + employeeId));
+
         if (employee.getProfile() != null) {
             Long oldProfileId = employee.getProfile().getId();
             // 2-1) 스토리지(로컬)에서 실제 파일 삭제
