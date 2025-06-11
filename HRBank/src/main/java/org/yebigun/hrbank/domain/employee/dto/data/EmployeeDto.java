@@ -1,7 +1,7 @@
 package org.yebigun.hrbank.domain.employee.dto.data;
 
-import java.time.LocalDate;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
+import java.time.LocalDate;
 
 public record EmployeeDto(
     Long id,

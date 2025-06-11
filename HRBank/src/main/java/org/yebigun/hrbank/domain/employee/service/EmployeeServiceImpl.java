@@ -308,4 +308,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         return employeeMapper.toDto(employee);
 
     }
+    @Override
+    public Employee getEmployeeEntityById(Long id) {
+        return employeeRepository.findById(id)
+            .orElseThrow(() -> new NoSuchElementException("직원을 찾을 수 없습니다."));
+    }
+
 }

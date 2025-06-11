@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -199,6 +200,7 @@ public interface EmployeeApi {
             )
         )
     })
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<EmployeeDto> createEmployee(
         @Parameter(description = "직원 등록용 데이터(JSON)")
@@ -211,7 +213,9 @@ public interface EmployeeApi {
             schema = @Schema(type = "string", format = "binary")
         )
         @RequestPart(value = "profile", required = false)
-        MultipartFile profile
+        MultipartFile profile,
+
+        HttpServletRequest httpRequest
     );
 
     @Operation(
@@ -275,7 +279,12 @@ public interface EmployeeApi {
                 schema    = @Schema(implementation = ErrorResponse.class)
             )
         )
+
     })
+
     @DeleteMapping("/{id}")
-    ResponseEntity<Void> deleteEmployee(@PathVariable Long id);
+    ResponseEntity<Void> deleteEmployee(
+        @PathVariable Long id,
+        HttpServletRequest httpRequest
+    );
 }
