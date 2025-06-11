@@ -17,11 +17,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogDto;
 import org.yebigun.hrbank.domain.changelog.dto.data.ChangeLogSearchCondition;
 import org.yebigun.hrbank.domain.changelog.dto.data.DiffDto;
-import org.yebigun.hrbank.domain.changelog.dto.response.CursorPageResponseChangeLogDto;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeType;
 import org.yebigun.hrbank.domain.changelog.service.ChangeLogService;
+import org.yebigun.hrbank.global.dto.CursorPageResponse;
 
 @RestController
 @RequiredArgsConstructor
@@ -33,7 +34,7 @@ public class ChangeLogController implements ChangeLogApi {
     // 이력 목록 조회
     @Override
     @GetMapping
-    public ResponseEntity<CursorPageResponseChangeLogDto> getChangeLogs(
+    public ResponseEntity<CursorPageResponse<ChangeLogDto>> getChangeLogs(
         @RequestParam(required = false) String employeeNumber,
         @RequestParam(required = false) ChangeType type,
         @RequestParam(required = false) String memo,
@@ -42,9 +43,9 @@ public class ChangeLogController implements ChangeLogApi {
         @RequestParam(required = false) @DateTimeFormat(iso = ISO.DATE_TIME)Instant atTo,
         @RequestParam(required = false) Long idAfter,
         @RequestParam(required = false) String cursor,
-        @RequestParam(defaultValue = "10") @Min(1) @Max(100) int size,
-        @RequestParam(defaultValue = "at") @Pattern(regexp = "^(at|ipAddress)$") String sortField,
-        @RequestParam(defaultValue = "desc") @Pattern(regexp = "^(asc|desc)$") String sortDirection
+        @RequestParam(defaultValue = "10") int size,
+        @RequestParam(defaultValue = "at") String sortField,
+        @RequestParam(defaultValue = "desc") String sortDirection
     ) {
         // 커서 디코딩, idAfter 변환
         Long effectiveIdAfter = resolveCursor(cursor, idAfter);

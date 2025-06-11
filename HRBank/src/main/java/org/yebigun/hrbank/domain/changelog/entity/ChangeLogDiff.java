@@ -34,10 +34,10 @@ public class ChangeLogDiff {
     @Column(name = "property_name",  nullable = false, length = 50)
     private String propertyName;
 
-    @Column(name = "before")
+    @Column(name = "before_value")
     private String before;
 
-    @Column(name = "after")
+    @Column(name = "after_value")
     private String after;
 
     public void update(ChangeLog changeLog) {
