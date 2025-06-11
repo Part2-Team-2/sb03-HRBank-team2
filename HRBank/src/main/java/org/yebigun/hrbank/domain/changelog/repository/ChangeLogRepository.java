@@ -1,12 +1,11 @@
 package org.yebigun.hrbank.domain.changelog.repository;
 
-import java.util.List;
+import java.time.Instant;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.yebigun.hrbank.domain.changelog.entity.ChangeLog;
-import org.yebigun.hrbank.domain.employee.entity.Employee;
 
-public interface ChangeLogRepository extends JpaRepository<ChangeLog, Long> {
+public interface ChangeLogRepository extends JpaRepository<ChangeLog, Long>, ChangeLogRepositoryCustom {
 
-    List<ChangeLog> findByEmployee(Employee employee);
+    long countByAtBetween(Instant from, Instant to);
 
 }

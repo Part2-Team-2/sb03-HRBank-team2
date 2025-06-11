@@ -18,4 +18,6 @@ public interface BinaryContentStorage {
     InputStream get(Long BinaryContentId);
 
     ResponseEntity<?> download(BinaryContentResponseDto response);
+
+    int deleteUnusedFiles();
 }

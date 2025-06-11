@@ -9,11 +9,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.time.LocalDate;
-import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -26,6 +25,9 @@ import org.yebigun.hrbank.domain.employee.dto.request.EmployeeListRequest;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.global.dto.CursorPageResponse;
 import org.yebigun.hrbank.global.dto.ErrorResponse;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Tag(name = "직원 관리", description = "직원 관리 API")
 public interface EmployeeApi {
@@ -211,6 +213,44 @@ public interface EmployeeApi {
         @RequestPart(value = "profile", required = false)
         MultipartFile profile
     );
+
+    @Operation(
+        summary = "직원 상세 조회",
+        description = "직원 ID로 직원 상세 정보를 조회합니다."
+    )
+    @ApiResponses({
+        @ApiResponse(
+            responseCode = "200",
+            description  = "조회 성공",
+            content      = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema    = @Schema(implementation = EmployeeDto.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "404",
+            description  = "직원을 찾을 수 없음",
+            content      = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema    = @Schema(implementation = ErrorResponse.class)
+            )
+        ),
+        @ApiResponse(
+            responseCode = "500",
+            description  = "서버 오류",
+            content      = @Content(
+                mediaType = MediaType.APPLICATION_JSON_VALUE,
+                schema    = @Schema(implementation = ErrorResponse.class)
+            )
+        )
+    })
+    @GetMapping("/{id}")
+    ResponseEntity<EmployeeDto> getEmployeeById(
+        @Parameter(description = "직원 고유 ID", required = true)
+        @PathVariable("id")
+        Long id
+    );
+
     @Operation(
         summary = "직원 삭제"
     )

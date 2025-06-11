@@ -17,15 +17,15 @@ public class GlobalExceptionHandler {
     }
 
     // 잘못된 요청을 하는 경우
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleException(IllegalArgumentException e) {
+    @ExceptionHandler({IllegalArgumentException.class, DuplicateException.class, UnsupportedException.class})
+    public ResponseEntity<ErrorResponse> handleBadRequestException(Exception e) {
 
         return sendErrorResponse(HttpStatus.BAD_REQUEST, "잘못된 요청입니다.", e.getMessage());
     }
 
     // 데이터가 존재하지 않을 경우
-    @ExceptionHandler(NoSuchElementException.class)
-    public ResponseEntity<ErrorResponse> handleException(NoSuchElementException e) {
+    @ExceptionHandler({NoSuchElementException.class, NotFoundException.class})
+    public ResponseEntity<ErrorResponse> handleNotFoundException(RuntimeException e) {
 
         return sendErrorResponse(HttpStatus.NOT_FOUND, "요청한 데이터를 찾을 수 없습니다.", e.getMessage());
     }

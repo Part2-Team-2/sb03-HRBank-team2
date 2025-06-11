@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDistributionDto;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
@@ -82,12 +83,10 @@ public class EmployeeController implements EmployeeApi {
 
 
     @Override
-    @GetMapping
-    public ResponseEntity<CursorPageResponse<EmployeeDto>> findEmployees(
-        @ModelAttribute EmployeeListRequest employeeListRequest) {
-        CursorPageResponse<EmployeeDto> result = employeeService.findEmployees(employeeListRequest);
-
-        return ResponseEntity.status(HttpStatus.OK).body(result);
+    @GetMapping("/{id}")
+    public ResponseEntity<EmployeeDto> getEmployeeById(@PathVariable Long id) {
+        EmployeeDto dto = employeeService.getEmployeeById(id);
+        return ResponseEntity.ok(dto);
     }
 
     @Override
@@ -99,5 +98,12 @@ public class EmployeeController implements EmployeeApi {
         } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @GetMapping
+    public ResponseEntity<CursorPageResponse<EmployeeDto>> findEmployees(
+        @ModelAttribute EmployeeListRequest employeeListRequest) {
+        CursorPageResponse<EmployeeDto> result = employeeService.findEmployees(employeeListRequest);
+        return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 }

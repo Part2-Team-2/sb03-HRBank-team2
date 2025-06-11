@@ -14,9 +14,14 @@ import org.yebigun.hrbank.domain.binaryContent.dto.BinaryContentResponseDto;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepository;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.*;
+import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * PackageName  : org.yebigun.hrbank.domain.binaryContent.storage
@@ -24,6 +29,7 @@ import java.util.NoSuchElementException;
  * Author       : dounguk
  * Date         : 2025. 6. 5.
  */
+
 @Log4j2
 @Transactional
 @Service
@@ -35,12 +41,10 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
 
     private final BinaryContentRepository binaryContentRepository;
 
-
     private Path root;
 
     @Value("${file.upload.all.path}")
     private String path;
-
 
     @PostConstruct
     public void init() {
@@ -53,23 +57,57 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
             }
             Files.createDirectories(uploadPath);
             this.root = uploadPath;
-
         } catch (Exception e) {
             throw new RuntimeException("업로드 디렉토리 생성에 실패했습니다: " + path, e);
         }
     }
 
     @Override
+    public int deleteUnusedFiles() {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(root)) {
+            // 1. DB에서 사용 중인 파일 이름 목록 수집
+            Set<String> validFileNames = binaryContentRepository.findAll()
+                .stream()
+                .flatMap(b -> {
+                    String ext = getExtension(b.getFileName());
+                    if (isCsvOrLog(ext)) {
+                        return Stream.of(b.getFileName());
+                    } else {
+                        return Stream.of(b.getId() + ext);
+                    }
+                })
+                .collect(Collectors.toSet());
+
+            int deletedCount = 0;
+            for (Path file : stream) {
+                if (Files.isRegularFile(file)) {
+                    String fileName = file.getFileName().toString();
+                    if (!validFileNames.contains(fileName)) {
+                        Files.deleteIfExists(file);
+                        deletedCount++;
+                        log.info("삭제된 미사용 파일: {}", fileName);
+                    }
+                }
+            }
+            return deletedCount;
+
+        } catch (IOException e) {
+            throw new RuntimeException("미사용 파일 정리에 실패했습니다", e);
+        }
+    }
+
+    @Override
     public Long put(Long binaryContentId, byte[] bytes) {
-        BinaryContent attachment = binaryContentRepository.findById(binaryContentId).orElseThrow(() -> new IllegalStateException("image information is not saved"));
-        String extention = getExtension(attachment.getFileName());
-        Path path = resolvePath(binaryContentId.toString(), extention);
-        Path tempPath = root.resolve(path.getFileName() + ".tmp");
+        BinaryContent attachment = binaryContentRepository.findById(binaryContentId)
+            .orElseThrow(() -> new IllegalStateException("image information is not saved"));
+
+        String extension = getExtension(attachment.getFileName());
+        Path pathToSave = resolvePathForWrite(attachment, extension);
+        Path tempPath = root.resolve(pathToSave.getFileName() + ".tmp");
 
         try {
-            // 임시 파일에 먼저 쓰기
             Files.write(tempPath, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
+            Files.move(tempPath, pathToSave, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             try {
                 Files.deleteIfExists(tempPath);
@@ -81,39 +119,21 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         return attachment.getId();
     }
 
-    /**
-     * 바이너리 콘텐츠의 InputStream을 반환합니다.
-     * @param binaryContentId 바이너리 콘텐츠 ID
-     * @return InputStream - 호출자가 반드시 close() 해야 함
-     * @throws NoSuchElementException 파일을 찾을 수 없는 경우
-     */
     @Transactional(readOnly = true)
     @Override
     public InputStream get(Long binaryContentId) {
         BinaryContent binaryContent = binaryContentRepository.findById(binaryContentId)
             .orElseThrow(() -> new NoSuchElementException("파일을 찾을 수 없습니다."));
+
         String extension = getExtension(binaryContent.getFileName());
+        Path pathToRead = resolvePathForRead(binaryContent, extension);
 
-        if (extension.equals(CSV_EXTENSION) || extension.equals(LOG_EXTENSION)) {
-            Path path = resolvePath(binaryContent.getFileName(), "");
-            if (!Files.exists(path)) {
-                throw new NoSuchElementException("파일을 찾을 수 없습니다.");
-            }
-            try {
-                return Files.newInputStream(path);
-            } catch (IOException e) {
-                throw new NoSuchElementException("파일을 찾을 수 없습니다.");
-            }
-        }
-
-        Path path = resolvePath(binaryContentId.toString(), extension);
-
-        if (!Files.exists(path)) {
+        if (!Files.exists(pathToRead)) {
             throw new NoSuchElementException("파일을 찾을 수 없습니다.");
         }
 
         try {
-            return Files.newInputStream(path);
+            return Files.newInputStream(pathToRead);
         } catch (IOException e) {
             throw new NoSuchElementException("파일을 찾을 수 없습니다.");
         }
@@ -136,8 +156,26 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         }
     }
 
-    private Path resolvePath(String fileName, String extension) {
-        return root.resolve(fileName + extension);
+    private Path resolvePathForWrite(BinaryContent binaryContent, String extension) {
+        String fileName = binaryContent.getFileName();
+        if (isCsvOrLog(extension)) {
+            return root.resolve(fileName);
+        } else {
+            return root.resolve(binaryContent.getId() + extension);
+        }
+    }
+
+    private Path resolvePathForRead(BinaryContent binaryContent, String extension) {
+        String fileName = binaryContent.getFileName();
+        if (isCsvOrLog(extension)) {
+            return root.resolve(fileName);
+        } else {
+            return root.resolve(binaryContent.getId() + extension);
+        }
+    }
+
+    boolean isCsvOrLog(String extension) {
+        return CSV_EXTENSION.equalsIgnoreCase(extension) || LOG_EXTENSION.equalsIgnoreCase(extension);
     }
 
     private String getExtension(String fileName) {
@@ -145,6 +183,6 @@ public class BinaryContentStorageImpl implements BinaryContentStorage {
         if (index == -1 || index == fileName.length() - 1) {
             return "";
         }
-        return fileName.substring(index);
+        return fileName.substring(index).toLowerCase();
     }
 }

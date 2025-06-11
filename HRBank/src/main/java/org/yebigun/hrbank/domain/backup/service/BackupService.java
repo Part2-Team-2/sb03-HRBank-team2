@@ -15,8 +15,13 @@ import java.time.Instant;
  * Date         : 2025. 6. 6.
  */
 public interface BackupService {
+
     BackupDto createBackup(HttpServletRequest request);
+
+    void createScheduledBackup() throws Exception;
 
     CursorPageResponseBackupDto findAsACursor(
         String worker, BackupStatus status, Instant startedAtFrom, Instant startedAtTo, Long idAfter, Instant cursor, int size, String sortField, Order sortDirection);
+
+    BackupDto findLatest(String status);
 }
