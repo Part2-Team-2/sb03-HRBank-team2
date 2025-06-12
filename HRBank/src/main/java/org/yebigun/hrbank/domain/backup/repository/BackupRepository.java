@@ -14,7 +14,9 @@ import java.util.Optional;
  */
 public interface BackupRepository extends JpaRepository<Backup, Long>, BackupRepositoryCustom {
 
-    Optional<Backup> findTopByOrderByStartedAtToDesc();
+    Optional<Backup> findTopByBackupStatusOrderByStartedAtToDesc(BackupStatus backupStatus);
+
+
 
     Optional<Backup> findTopByBackupStatusOrderByCreatedAtDesc(BackupStatus status);
 }
