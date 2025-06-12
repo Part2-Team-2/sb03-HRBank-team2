@@ -160,7 +160,6 @@ public class BackupServiceImpl implements BackupService {
 
     private boolean isBackupRequired() {
         Optional<Instant> lastChangedLog = changeLogRepository.findTopByOrderByAtDesc().map(ChangeLog::getAt);
-//        Optional<Instant> lastBackedUp = backupRepository.findTopByOrderByStartedAtToDesc().map(Backup::getStartedAtTo);
         Optional<Instant> lastBackedUp = backupRepository
             .findTopByBackupStatusOrderByStartedAtToDesc(BackupStatus.COMPLETED)
             .map(Backup::getStartedAtTo);
