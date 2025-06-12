@@ -14,10 +14,5 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
     boolean existsByEmail(String email);
 
     boolean existsByEmployeeNumber(String employeeNumber);
-
-    Optional<Employee> findTopByOrderByCreatedAtDesc();
-
-    Optional<Employee> findTopByOrderByUpdatedAtDesc();
-
 }
 
