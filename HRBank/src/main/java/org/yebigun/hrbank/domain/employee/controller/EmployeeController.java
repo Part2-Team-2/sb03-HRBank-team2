@@ -109,10 +109,8 @@ public class EmployeeController implements EmployeeApi {
         String ipAddress = extractClientIp(httpRequest);
         Employee beforeValue = employeeService.getEmployeeEntityById(id);
 
-        changeLogService.deleteRecord(beforeValue, ipAddress);
-
-
         employeeService.deleteEmployee(id);
+        changeLogService.deleteRecord(beforeValue, ipAddress);
         return ResponseEntity.noContent().build();
     }
 

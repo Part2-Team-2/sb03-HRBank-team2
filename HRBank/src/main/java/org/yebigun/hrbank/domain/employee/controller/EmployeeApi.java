@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -23,6 +24,7 @@ import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeTrendDto;
 import org.yebigun.hrbank.domain.employee.dto.request.EmployeeCreateRequest;
 import org.yebigun.hrbank.domain.employee.dto.request.EmployeeListRequest;
+import org.yebigun.hrbank.domain.employee.dto.request.EmployeeUpdateRequest;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.global.dto.CursorPageResponse;
 import org.yebigun.hrbank.global.dto.ErrorResponse;
@@ -285,6 +287,22 @@ public interface EmployeeApi {
     @DeleteMapping("/{id}")
     ResponseEntity<Void> deleteEmployee(
         @PathVariable Long id,
+        HttpServletRequest httpRequest
+    );
+
+    @Operation(summary = "직원 정보 수정", description = "직원 정보를 수정합니다.")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "수정 성공", content = @Content(schema = @Schema(implementation = EmployeeDto.class))),
+        @ApiResponse(responseCode = "400", description = "잘못된 요청", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "직원을 찾을 수 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "500", description = "서버 오류", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PatchMapping(path = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    ResponseEntity<EmployeeDto> updateEmployee(
+        @Parameter(description = "직원 고유 ID", required = true) @PathVariable("id") Long id,
+        @Parameter(description = "수정할 직원 정보(JSON)") @Valid @RequestPart("employee") EmployeeUpdateRequest request,
+        @Parameter(description = "프로필 이미지 파일 (optional)", schema = @Schema(type = "string", format = "binary"))
+        @RequestPart(value = "profile", required = false) MultipartFile profile,
         HttpServletRequest httpRequest
     );
 }
