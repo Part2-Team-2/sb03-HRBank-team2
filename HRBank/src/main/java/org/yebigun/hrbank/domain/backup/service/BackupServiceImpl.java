@@ -15,8 +15,9 @@ import org.yebigun.hrbank.domain.backup.mapper.BackupMapper;
 import org.yebigun.hrbank.domain.backup.repository.BackupRepository;
 import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.storage.BackupFileStorage;
+import org.yebigun.hrbank.domain.changelog.entity.ChangeLog;
+import org.yebigun.hrbank.domain.changelog.repository.ChangeLogRepository;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
-import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.mapper.EmployeeMapper;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 
@@ -45,6 +46,7 @@ public class BackupServiceImpl implements BackupService {
     private final BackupFileStorage binaryContentStorage;
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper employeeMapper;
+    private final ChangeLogRepository changeLogRepository;
 
     @Override
     public void createScheduledBackup() throws Exception {
@@ -157,19 +159,15 @@ public class BackupServiceImpl implements BackupService {
     }
 
     private boolean isBackupRequired() {
-        Optional<Instant> lastCreated = employeeRepository.findTopByOrderByCreatedAtDesc().map(Employee::getCreatedAt);
-        Optional<Instant> lastUpdated = employeeRepository.findTopByOrderByUpdatedAtDesc().map(Employee::getUpdatedAt);
-        Optional<Instant> lastBackedUp = backupRepository.findTopByOrderByCreatedAtDesc().map(Backup::getCreatedAt);
+        Optional<Instant> lastChangedLog = changeLogRepository.findTopByOrderByAtDesc().map(ChangeLog::getAt);
+        Optional<Instant> lastBackedUp = backupRepository.findTopByOrderByStartedAtToDesc().map(Backup::getStartedAtTo);
 
         if (lastBackedUp.isEmpty()) {
             return true;
         }
         Instant backupTime = lastBackedUp.get();
 
-        boolean createdAfterBackup = lastCreated.map(created -> created.isAfter(backupTime)).orElse(false);
-        boolean updatedAfterBackup = lastUpdated.map(updated -> updated.isAfter(backupTime)).orElse(false);
-
-        return createdAfterBackup || updatedAfterBackup;
+        return lastChangedLog.map(updated -> updated.isAfter(backupTime)).orElse(false);
     }
 
 
