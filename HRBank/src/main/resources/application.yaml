@@ -14,7 +14,7 @@ springdoc:
 # application.yaml
 spring:
   profiles:
-    active: dev  # 기본 실행 프로파일(dev/deploy 중 선택)
+    active: deploy  # 기본 실행 프로파일(dev/deploy 중 선택)
 
 # 공통 설정
 server:
