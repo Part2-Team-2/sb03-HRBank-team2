@@ -2,6 +2,7 @@ package org.yebigun.hrbank.domain.department.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;
@@ -16,7 +17,15 @@ import org.yebigun.hrbank.global.base.BaseUpdatableEntity;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "department")
+@Table(
+    name = "department",
+    indexes = {
+        @Index(name = "idx_department_name_id", columnList = "name, id"),
+        @Index(name = "idx_department_established_id", columnList = "establishedDate, id"),
+        @Index(name = "idx_department_name", columnList = "name"),
+        @Index(name = "idx_department_description", columnList = "description"),
+    }
+)
 public class Department extends BaseUpdatableEntity {
 
     @Column(name = "name", nullable = false, unique = true)

@@ -1,0 +1,23 @@
+# application-deploy.yaml
+spring:
+  config:
+    activate:
+      on-profile: deploy
+  # DB ?? ??
+  datasource:
+    url: jdbc:postgresql://localhost:5432/hrbankdb
+    username: yebigun
+    password: yebigun
+    driver-class-name: org.postgresql.Driver
+  # JPA ??
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+        use_sql_comments: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false

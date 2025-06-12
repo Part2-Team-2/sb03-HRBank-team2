@@ -11,52 +11,14 @@ springdoc:
     operations-sorter: method
 
 
+# application.yaml
 spring:
-  config:
-    activate:
-      on-profile: local
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-  datasource:
-    driver-class-name: org.h2.Driver
-    url: jdbc:h2:~/test;MODE=POSTGRESQL
-    username: root
-    password:
-  jpa:
-    show_sql: true
-    hibernate:
-      ddl-auto: create
-file:
-  upload:
-    all:
-      path: ./files
+  profiles:
+    active: dev  # 기본 실행 프로파일(dev/deploy 중 선택)
 
----
-
-spring:
-  config:
-    activate:
-      on-profile: dev
-  # DB ?? ??
-  datasource:
-    url: jdbc:postgresql://localhost:5432/hrbankdb
-    username: yebigun
-    password: yebigun
-    driver-class-name: org.postgresql.Driver
-  # JPA ??
-  jpa:
-    hibernate:
-      ddl-auto: none
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        highlight_sql: true
-        use_sql_comments: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-    open-in-view: false
+# 공통 설정
+server:
+  port: 8080
 
 
 # logging ??

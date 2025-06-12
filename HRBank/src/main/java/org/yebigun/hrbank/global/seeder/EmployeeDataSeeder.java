@@ -16,7 +16,7 @@ import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.domain.employee.repository.EmployeeRepository;
 
-@Profile("local")
+@Profile("dev")
 @Component
 @DependsOn("departmentDataSeeder")
 @RequiredArgsConstructor

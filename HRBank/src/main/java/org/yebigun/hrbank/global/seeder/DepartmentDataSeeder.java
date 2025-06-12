@@ -11,7 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.yebigun.hrbank.domain.department.entity.Department;
 import org.yebigun.hrbank.domain.department.repository.DepartmentRepository;
 
-@Profile("local")
+@Profile("dev")
 @Component
 @RequiredArgsConstructor
 public class DepartmentDataSeeder implements DataSeeder{
