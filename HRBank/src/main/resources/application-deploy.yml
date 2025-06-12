@@ -1,4 +1,3 @@
-# application-deploy.yaml
 spring:
   config:
     activate:

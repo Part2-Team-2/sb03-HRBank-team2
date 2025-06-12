@@ -11,7 +11,6 @@ springdoc:
     operations-sorter: method
 
 
-# application.yaml
 spring:
   profiles:
     active: deploy  # 기본 실행 프로파일(dev/deploy 중 선택)
