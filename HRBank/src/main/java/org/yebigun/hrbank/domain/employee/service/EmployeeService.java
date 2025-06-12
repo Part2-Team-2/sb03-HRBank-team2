@@ -7,6 +7,7 @@ import org.yebigun.hrbank.domain.employee.dto.data.EmployeeTrendDto;
 import org.yebigun.hrbank.domain.employee.dto.request.EmployeeCreateRequest;
 import org.yebigun.hrbank.domain.employee.dto.request.EmployeeListRequest;
 import org.yebigun.hrbank.domain.employee.dto.request.EmployeeUpdateRequest;
+import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.global.dto.CursorPageResponse;
 
@@ -28,4 +29,6 @@ public interface EmployeeService {
     void deleteEmployee(Long employeeId);
 
     EmployeeDto getEmployeeById(Long id);
+
+    Employee getEmployeeEntityById(Long id);
 }

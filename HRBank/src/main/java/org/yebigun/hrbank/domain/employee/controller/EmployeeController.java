@@ -1,5 +1,7 @@
 package org.yebigun.hrbank.domain.employee.controller;
 
+import jakarta.persistence.EntityManager;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -16,12 +18,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.yebigun.hrbank.domain.changelog.service.ChangeLogService;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDistributionDto;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeTrendDto;
 import org.yebigun.hrbank.domain.employee.dto.request.EmployeeCreateRequest;
 import org.yebigun.hrbank.domain.employee.dto.request.EmployeeListRequest;
 import org.yebigun.hrbank.domain.employee.dto.request.EmployeeUpdateRequest;
+import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.domain.employee.service.EmployeeService;
 import org.yebigun.hrbank.global.dto.CursorPageResponse;
@@ -35,7 +39,9 @@ import java.util.List;
 public class EmployeeController implements EmployeeApi {
 
     private final EmployeeService employeeService;
-
+    private final ChangeLogService changeLogService;
+    private final EntityManager entityManager;
+    
     @Override
     @GetMapping("/stats/trend")
     public ResponseEntity<List<EmployeeTrendDto>> getEmployeeTrend(
@@ -75,9 +81,15 @@ public class EmployeeController implements EmployeeApi {
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<EmployeeDto> createEmployee(
         @RequestPart("employee") EmployeeCreateRequest request,
-        @RequestPart(value = "profile", required = false) MultipartFile profile
+        @RequestPart(value = "profile", required = false) MultipartFile profile,
+        HttpServletRequest httpRequest
     ) {
         EmployeeDto created = employeeService.createEmployee(request, profile);
+
+        String ipAddress = extractClientIp(httpRequest);
+        Employee employee = employeeService.getEmployeeEntityById(created.id());
+        changeLogService.createRecord(employee, request.memo(), ipAddress);
+
         return ResponseEntity.ok(created);
     }
 
@@ -89,10 +101,16 @@ public class EmployeeController implements EmployeeApi {
         return ResponseEntity.ok(dto);
     }
 
-    @Override
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEmployee(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteEmployee(
+        @PathVariable Long id,
+        HttpServletRequest httpRequest
+    ) {
+        String ipAddress = extractClientIp(httpRequest);
+        Employee beforeValue = employeeService.getEmployeeEntityById(id);
+
         employeeService.deleteEmployee(id);
+        changeLogService.deleteRecord(beforeValue, ipAddress);
         return ResponseEntity.noContent().build();
     }
 
@@ -107,11 +125,38 @@ public class EmployeeController implements EmployeeApi {
     public ResponseEntity<EmployeeDto> updateEmployee(
         @PathVariable("id") Long employeeId,
         @RequestPart("employee") EmployeeUpdateRequest request,
-        @RequestPart(value = "profile", required = false) MultipartFile profile
+        @RequestPart(value = "profile", required = false) MultipartFile profile,
+        HttpServletRequest httpRequest
     ) {
+        String ipAddress = extractClientIp(httpRequest);
+
+        Employee beforeValue = employeeService.getEmployeeEntityById(employeeId);
+        entityManager.detach(beforeValue); // 영속성 컨텍스트에서 분리
 
         EmployeeDto updated = employeeService.updateEmployee(employeeId, request, profile);
+
+        entityManager.clear(); // 영속성 컨텍스트 초기화
+        Employee afterValue = employeeService.getEmployeeEntityById(employeeId);
+
+        changeLogService.updateRecord(beforeValue, afterValue, request.memo(), ipAddress);
+
         return ResponseEntity.ok(updated);
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip != null && !ip.isEmpty()) {
+            ip = ip.split(",")[0].trim();
+        } else {
+            ip = request.getRemoteAddr();
+        }
+
+        // IPv6 루프백 처리
+        if ("0:0:0:0:0:0:0:1".equals(ip) || "::1".equals(ip)) {
+            return "127.0.0.1";
+        }
+
+        return ip;
     }
 
 }
