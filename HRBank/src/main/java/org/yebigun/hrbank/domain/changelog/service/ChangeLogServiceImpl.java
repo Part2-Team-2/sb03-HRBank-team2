@@ -152,7 +152,7 @@ public class ChangeLogServiceImpl implements ChangeLogService {
         }
 
         // 직원 이력 저장
-        if (!diffs.isEmpty()) {
+        if (!diffs.isEmpty() || (memo != null && !memo.isBlank())) {
             ChangeLog changeLog = ChangeLog.builder()
                 .type(changeType)
                 // CREATED 시 afterValue 사용, UPDATED & DELETED 시 beforeValue 사용
