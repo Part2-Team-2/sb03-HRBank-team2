@@ -19,5 +19,6 @@ public interface EmployeeMapper {
     @Mapping(target = "departmentName", source = "department.name")
     @Mapping(target = "profileImageId", source = "profile.id")
     @Mapping(target = "status", source = "status")
+    @Mapping(target = "memo", source = "memo")
     EmployeeDto toDto(Employee employee);
 }

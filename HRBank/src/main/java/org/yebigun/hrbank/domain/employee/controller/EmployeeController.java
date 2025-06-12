@@ -133,7 +133,7 @@ public class EmployeeController implements EmployeeApi {
         Employee beforeValue = employeeService.getEmployeeEntityById(employeeId);
         entityManager.detach(beforeValue); // 영속성 컨텍스트에서 분리
 
-         EmployeeDto updated = employeeService.updateEmployee(employeeId, request, profile);
+        EmployeeDto updated = employeeService.updateEmployee(employeeId, request, profile);
 
         entityManager.clear(); // 영속성 컨텍스트 초기화
         Employee afterValue = employeeService.getEmployeeEntityById(employeeId);
