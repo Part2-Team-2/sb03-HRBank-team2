@@ -8,7 +8,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,6 +18,8 @@ import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.department.entity.Department;
 import org.yebigun.hrbank.global.base.BaseUpdatableEntity;
 
+import java.time.LocalDate;
+
 @Builder
 @Getter
 @Setter
@@ -28,7 +29,7 @@ import org.yebigun.hrbank.global.base.BaseUpdatableEntity;
 @Table(name = "employee")
 public class Employee extends BaseUpdatableEntity {
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String name;
 
     @Column(nullable = false, unique = true)
