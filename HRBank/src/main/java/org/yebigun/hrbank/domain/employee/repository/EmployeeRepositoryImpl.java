@@ -41,7 +41,7 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
             .from(e)
             .where(e.status.eq(EmployeeStatus.ACTIVE))
             .fetch();
-        
+
         TreeMap<LocalDate, Long> dailyCounts = new TreeMap<>();
 
         // 1. createdAt -> LocalDate 변환 후 빈도 수 집계
