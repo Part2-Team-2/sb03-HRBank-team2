@@ -10,9 +10,7 @@ import org.yebigun.hrbank.domain.binaryContent.entity.BinaryContent;
 import org.yebigun.hrbank.domain.binaryContent.repository.BinaryContentRepository;
 import org.yebigun.hrbank.domain.employee.dto.data.EmployeeDto;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -69,11 +67,20 @@ public class BackupFileStorageImpl implements BackupFileStorage {
         Path filePath = root.resolve(fileName + CSV_EXTENSION);
 
         log.info("파일 생성 시작");
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(filePath.toFile(),StandardCharsets.UTF_8))) {
+        try (
+            OutputStream os = new FileOutputStream(filePath.toFile());
+            OutputStreamWriter osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
+            BufferedWriter bw = new BufferedWriter(osw)
+        )  {
+
+            os.write(0xEF);
+            os.write(0xBB);
+            os.write(0xBF);
+
             bw.write(COLUMNS);
             bw.newLine();
 
-            if(employees != null && !employees.isEmpty()) {
+            if (employees != null && !employees.isEmpty()) {
                 for (EmployeeDto employee : employees) {
                     log.warn("내부 반복");
                     try {
