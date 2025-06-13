@@ -8,9 +8,7 @@ import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import java.time.Instant;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,19 +36,16 @@ public class EmployeeRepositoryImpl implements EmployeeRepositoryCustom {
     @Override
     public List<EmployeeTrendDto> findEmployeeTrend(LocalDate from, LocalDate to, String unit) {
 
-        List<Instant> allActiveCreatedAts = queryFactory
-            .select(e.createdAt)
+        List<LocalDate> allActiveCreatedAts = queryFactory
+            .select(e.hireDate)
             .from(e)
             .where(e.status.eq(EmployeeStatus.ACTIVE))
             .fetch();
 
-        ZoneId zoneId = ZoneId.systemDefault();
-
         TreeMap<LocalDate, Long> dailyCounts = new TreeMap<>();
 
         // 1. createdAt -> LocalDate 변환 후 빈도 수 집계
-        for (Instant instant : allActiveCreatedAts) {
-            LocalDate date = instant.atZone(zoneId).toLocalDate();
+        for (LocalDate date : allActiveCreatedAts) {
             dailyCounts.merge(date, 1L, Long::sum);
         }
         List<LocalDate> datePoints = generateDatePoints(from, to, unit);

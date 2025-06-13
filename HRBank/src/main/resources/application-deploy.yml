@@ -1,18 +1,21 @@
-# application-deploy.yaml
 spring:
   config:
     activate:
       on-profile: deploy
   # DB ?? ??
   datasource:
-    url: jdbc:postgresql://localhost:5432/hrbankdb
-    username: yebigun
-    password: yebigun
+    url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}
+    username: ${PGUSER}
+    password: ${PGPASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
   # JPA ??
   jpa:
     hibernate:
-      ddl-auto: none
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -21,3 +24,6 @@ spring:
         use_sql_comments: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
     open-in-view: false
+
+server:
+  port: ${PORT:8080}
