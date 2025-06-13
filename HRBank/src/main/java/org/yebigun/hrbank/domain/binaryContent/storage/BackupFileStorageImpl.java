@@ -67,50 +67,46 @@ public class BackupFileStorageImpl implements BackupFileStorage {
         Path filePath = root.resolve(fileName + CSV_EXTENSION);
 
         log.info("파일 생성 시작");
-        try (
-            OutputStream os = new FileOutputStream(filePath.toFile());
-            OutputStreamWriter osw = new OutputStreamWriter(os, StandardCharsets.UTF_8);
-            BufferedWriter bw = new BufferedWriter(osw)
-        )  {
+        try (OutputStream os = new FileOutputStream(filePath.toFile())) {
+            os.write(new byte[]{(byte)0xEF, (byte)0xBB, (byte)0xBF});
 
-            os.write(0xEF);
-            os.write(0xBB);
-            os.write(0xBF);
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os, StandardCharsets.UTF_8))) {
+                bw.write(COLUMNS);
+                bw.newLine();
 
-            bw.write(COLUMNS);
-            bw.newLine();
-
-            if (employees != null && !employees.isEmpty()) {
-                for (EmployeeDto employee : employees) {
-                    log.warn("내부 반복");
-                    try {
-                        bw.write(String.format("%d,%s,%s,%s,%s,%s,%s,%s",
-                            employee.id(),
-                            employee.employeeNumber(),
-                            employee.name(),
-                            employee.email(),
-                            employee.departmentName() != null ? employee.departmentName() : "",
-                            employee.position(),
-                            employee.hireDate(),
-                            employee.status()
-                        ));
-                        bw.newLine();
-                    } catch (Exception e) {
-                        log.warn("직원 정보 쓰기 실패: " + employee.id(), e);
+                if (employees != null && !employees.isEmpty()) {
+                    for (EmployeeDto employee : employees) {
+                        log.warn("내부 반복");
                         try {
-                            Files.deleteIfExists(filePath);
-                            log.warn("CSV 파일 삭제");
-                        } catch (IOException deleteException) {
-                            e.addSuppressed(deleteException);
+                            bw.write(String.format("%d,%s,%s,%s,%s,%s,%s,%s",
+                                employee.id(),
+                                employee.employeeNumber(),
+                                employee.name(),
+                                employee.email(),
+                                employee.departmentName() != null ? employee.departmentName() : "",
+                                employee.position(),
+                                employee.hireDate(),
+                                employee.status()
+                            ));
+                            bw.newLine();
+                        } catch (Exception e) {
+                            log.warn("직원 정보 쓰기 실패: " + employee.id(), e);
+                            try {
+                                Files.deleteIfExists(filePath);
+                                log.warn("CSV 파일 삭제");
+                            } catch (IOException deleteException) {
+                                e.addSuppressed(deleteException);
+                            }
+                            throw new RuntimeException("파일 삭제중 오류 발생");
                         }
-                        throw new RuntimeException("파일 삭제중 오류 발생");
                     }
                 }
+                bw.flush();
             }
-            bw.flush();
         } catch (IOException e) {
             throw new RuntimeException("파일 생성중 오류 발생", e);
         }
+
 
         long fileSize;
         try{
