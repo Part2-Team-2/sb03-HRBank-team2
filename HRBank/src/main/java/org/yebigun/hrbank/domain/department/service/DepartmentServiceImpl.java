@@ -125,7 +125,7 @@ public class DepartmentServiceImpl implements DepartmentService {
             hasNext && !currentPage.isEmpty() ? currentPage.get(pageSize - 1).getId() : null;
 
         String nextCursor = (nextIdAfter != null)
-            ? Base64.getEncoder().encodeToString(String.valueOf(nextIdAfter).getBytes())
+            ? Base64.getUrlEncoder().withoutPadding().encodeToString(String.valueOf(nextIdAfter).getBytes())
             : null;
 
         long totalElements = departmentRepository.countAllByCondition(nameOrDescription);
@@ -152,7 +152,7 @@ public class DepartmentServiceImpl implements DepartmentService {
             return null;
         }
         try {
-            return Long.parseLong(new String(Base64.getDecoder().decode(cursor)));
+            return Long.parseLong(new String(Base64.getUrlDecoder().decode(cursor)));
         } catch (Exception e) {
             log.warn("Invalid cursor decode error", e);
             throw new IllegalArgumentException("잘못된 커서 형식입니다.");
