@@ -21,7 +21,6 @@ import org.yebigun.hrbank.global.base.BaseUpdatableEntity;
 
 @Builder
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
@@ -58,4 +57,36 @@ public class Employee extends BaseUpdatableEntity {
     @OneToOne
     @JoinColumn(name = "profile_id")
     private BinaryContent profile;
+
+    public void updateName(String name) {
+        this.name = name;
+    }
+
+    public void updateEmail(String email) {
+        this.email = email;
+    }
+
+    public void updateDepartment(Department department) {
+        this.department = department;
+    }
+
+    public void updatePosition(String position) {
+        this.position = position;
+    }
+
+    public void updateHireDate(LocalDate hireDate) {
+        this.hireDate = hireDate;
+    }
+
+    public void updateMemo(String memo) {
+        this.memo = memo;
+    }
+
+    public void updateStatus(EmployeeStatus status) {
+        this.status = status;
+    }
+
+    public void updateProfile(BinaryContent profile) {
+        this.profile = profile;
+    }
 }
