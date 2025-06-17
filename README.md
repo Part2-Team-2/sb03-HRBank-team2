@@ -21,10 +21,13 @@
 
 - **프로젝트명**: HRBank
 - **진행기간**: 2025.06.03 ~ 2025.06.13
+<img width="939" alt="스크린샷 2025-06-17 오후 3 08 12" src="https://github.com/user-attachments/assets/301f663d-9865-4728-a7dc-f0dac5eb3e3b" />
 
 ---
 
 ## 🛠 기술 스택
+
+
 
 ### Backend
 
