@@ -20,6 +20,7 @@ import org.yebigun.hrbank.domain.employee.dto.request.EmployeeUpdateRequest;
 import org.yebigun.hrbank.domain.employee.entity.Employee;
 import org.yebigun.hrbank.domain.employee.entity.EmployeeStatus;
 import org.yebigun.hrbank.domain.employee.exception.DuplicateEmailException;
+import org.yebigun.hrbank.domain.employee.exception.NotFoundEmployeeException;
 import org.yebigun.hrbank.domain.employee.exception.UnsupportedGroupByException;
 import org.yebigun.hrbank.domain.employee.exception.UnsupportedSortDirectionException;
 import org.yebigun.hrbank.domain.employee.exception.UnsupportedSortFieldException;
@@ -193,8 +194,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         return response;
     }
 
-    private String getNextCursor(String sortField, Employee employee)
-        throws UnsupportedSortFieldException {
+    private String getNextCursor(String sortField, Employee employee) {
         return switch (sortField) {
             case "name" -> employee.getName();
             case "employeeNumber" -> employee.getEmployeeNumber();
@@ -235,24 +235,24 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional
     public EmployeeDto updateEmployee(Long employeeId, EmployeeUpdateRequest request, MultipartFile profile) {
         Employee employee = employeeRepository.findById(employeeId)
-            .orElseThrow(() -> new NoSuchElementException("존재하지 않는 직원입니다."));
+            .orElseThrow(() -> new NotFoundEmployeeException("존재하지 않는 직원입니다."));
 
         if (request.email() != null && !employee.getEmail().equals(request.email())
             && employeeRepository.existsByEmail(request.email())) {
-            throw new NoSuchElementException("이미 등록된 이메일입니다.");
+            throw new DuplicateEmailException("이미 등록된 이메일입니다.");
         }
 
-        employee.setName(request.name());
-        employee.setEmail(request.email());
-        employee.setPosition(request.position());
-        employee.setHireDate(request.hireDate());
-        employee.setStatus(request.status());
-        employee.setMemo(request.memo());
+        employee.updateName(request.name());
+        employee.updateEmail(request.email());
+        employee.updatePosition(request.position());
+        employee.updateHireDate(request.hireDate());
+        employee.updateStatus(request.status());
+        employee.updateMemo(request.memo());
 
         if (request.departmentId() != null) {
             Department department = departmentRepository.findById(request.departmentId())
-                .orElseThrow(() -> new NoSuchElementException("존재하지 않는 부서입니다."));
-            employee.setDepartment(department);
+                .orElseThrow(() -> new NotFoundDepartmentException("존재하지 않는 부서입니다."));
+            employee.updateDepartment(department);
         }
 
         if (profile != null && !profile.isEmpty()) {
@@ -276,7 +276,7 @@ public class EmployeeServiceImpl implements EmployeeService {
             } catch (IOException e) {
                 throw new RuntimeException("프로필 이미지 저장 실패", e);
             }
-            employee.setProfile(savedMeta);
+            employee.updateProfile(savedMeta);
         }
 
         Employee updated = employeeRepository.save(employee);
@@ -288,7 +288,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     public void deleteEmployee(Long employeeId) {
         // 1) 직원 조회 (없으면 404)
         Employee employee = employeeRepository.findById(employeeId)
-            .orElseThrow(() -> new NoSuchElementException("직원을 찾을 수 없습니다. id=" + employeeId));
+            .orElseThrow(() -> new NotFoundEmployeeException("직원을 찾을 수 없습니다. id=" + employeeId));
 
         if (employee.getProfile() != null) {
             Long oldProfileId = employee.getProfile().getId();
@@ -304,14 +304,14 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Transactional(readOnly = true)
     public EmployeeDto getEmployeeById(Long id) {
         Employee employee = employeeRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("직원을 찾을 수 없습니다."));
+            .orElseThrow(() -> new NotFoundEmployeeException("직원을 찾을 수 없습니다."));
         return employeeMapper.toDto(employee);
 
     }
     @Override
     public Employee getEmployeeEntityById(Long id) {
         return employeeRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("직원을 찾을 수 없습니다."));
+            .orElseThrow(() -> new NotFoundEmployeeException(("직원을 찾을 수 없습니다.")));
     }
 
 }
